@@ -7,14 +7,20 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="styles.css" rel="stylesheet" />
   <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
     #leaderboard div { margin-bottom: 20px; }
     #leaderboard img { border-radius: 50%; vertical-align: middle; margin-right: 10px; }
+    canvas { margin-top: 40px; }
   </style>
 </head>
 <body>
   <h1>302 Troop Phys Tracker</h1>
   <div id="leaderboard">Loading leaderboard...</div>
+  
+  <h2>Daily Distances (Current Month)</h2>
   <canvas id="dailyChart" width="600" height="200"></canvas>
+
+  <h2>Monthly Distances (Last 2 Months)</h2>
   <canvas id="monthlyChart" width="600" height="200"></canvas>
 
   <script>
@@ -28,7 +34,13 @@
         const dailyDatasets = [];
         const monthlyDatasets = [];
 
-        Object.values(data.athletes).forEach(user => {
+        const athleteEntries = Object.values(data.athletes);
+        if (athleteEntries.length === 0) {
+          leaderboardDiv.innerText = 'No athlete data available.';
+          return;
+        }
+
+        athleteEntries.forEach(user => {
           const totalDistance = user.daily_distance_km.reduce((a,b)=>a+b,0).toFixed(2);
           const div = document.createElement('div');
           div.innerHTML = `
@@ -38,7 +50,7 @@
           `;
           leaderboardDiv.appendChild(div);
 
-          // Daily distance line chart
+          // Daily distance line chart dataset
           dailyDatasets.push({
             label: `${user.firstname} ${user.lastname}`,
             data: user.daily_distance_km,
@@ -47,7 +59,7 @@
             tension: 0.1
           });
 
-          // Monthly bar chart
+          // Monthly bar chart dataset
           monthlyDatasets.push({
             label: `${user.firstname} ${user.lastname}`,
             data: user.monthly_distances,
@@ -55,11 +67,9 @@
           });
         });
 
-        // Dynamic labels based on array length
-        const firstUser = Object.values(data.athletes)[0];
-        const dailyLabels = firstUser.daily_distance_km.map((_, i)=>i+1);
+        // --- Daily chart labels ---
+        const dailyLabels = athleteEntries[0].daily_distance_km.map((_, i)=>i+1);
 
-        // Daily line chart
         new Chart(document.getElementById('dailyChart').getContext('2d'), {
           type: 'line',
           data: { labels: dailyLabels, datasets: dailyDatasets },
@@ -73,14 +83,18 @@
           }
         });
 
-        // Last 2 months bar chart
+        // --- Monthly chart labels ---
+        const monthLabels = data.month_names || ['Previous Month','Current Month'];
+
         new Chart(document.getElementById('monthlyChart').getContext('2d'), {
           type: 'bar',
-          data: { labels: ['Previous Month','Current Month'], datasets: monthlyDatasets },
+          data: { labels: monthLabels, datasets: monthlyDatasets },
           options: {
             responsive: true,
             plugins: { legend: { position: 'bottom' } },
-            scales: { y: { beginAtZero: true, title: { display: true, text: 'Distance (km)' } } }
+            scales: {
+              y: { beginAtZero: true, title: { display: true, text: 'Distance (km)' } }
+            }
           }
         });
 
