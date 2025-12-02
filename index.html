@@ -22,9 +22,8 @@
       try {
         const response = await fetch('data/athletes.json');
         const data = await response.json();
-
         const leaderboardDiv = document.getElementById('leaderboard');
-        leaderboardDiv.innerHTML = ''; 
+        leaderboardDiv.innerHTML = '';
 
         const dailyDatasets = [];
         const monthlyDatasets = [];
@@ -56,13 +55,14 @@
           });
         });
 
-        // Render daily line chart
+        // Dynamic labels based on array length
+        const firstUser = Object.values(data.athletes)[0];
+        const dailyLabels = firstUser.daily_distance_km.map((_, i)=>i+1);
+
+        // Daily line chart
         new Chart(document.getElementById('dailyChart').getContext('2d'), {
           type: 'line',
-          data: {
-            labels: Array.from({length: data.athletes[Object.keys(data.athletes)[0]].daily_distance_km.length}, (_, i)=>i+1),
-            datasets: dailyDatasets
-          },
+          data: { labels: dailyLabels, datasets: dailyDatasets },
           options: {
             responsive: true,
             plugins: { legend: { position: 'bottom' } },
@@ -73,23 +73,18 @@
           }
         });
 
-        // Render last 2 months bar chart
+        // Last 2 months bar chart
         new Chart(document.getElementById('monthlyChart').getContext('2d'), {
           type: 'bar',
-          data: {
-            labels: ['Last month','Current month'],
-            datasets: monthlyDatasets
-          },
+          data: { labels: ['Previous Month','Current Month'], datasets: monthlyDatasets },
           options: {
             responsive: true,
             plugins: { legend: { position: 'bottom' } },
-            scales: {
-              y: { beginAtZero: true, title: { display: true, text: 'Distance (km)' } }
-            }
+            scales: { y: { beginAtZero: true, title: { display: true, text: 'Distance (km)' } } }
           }
         });
 
-      } catch (err) {
+      } catch(err) {
         console.error('Error loading athletes.json:', err);
         document.getElementById('leaderboard').innerText = 'Failed to load leaderboard.';
       }
