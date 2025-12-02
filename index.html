@@ -2,92 +2,77 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>302 Troop Phys Tracker</title>
+  <title>Fitness Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="styles.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="styles.css" rel="stylesheet" />
+  <style>
+    #leaderboard div { margin-bottom: 20px; }
+    #leaderboard img { border-radius: 50%; vertical-align: middle; margin-right: 10px; }
+  </style>
 </head>
 <body>
   <h1>302 Troop Phys Tracker</h1>
-
-  <h2>Leaderboard</h2>
   <div id="leaderboard">Loading leaderboard...</div>
-
-  <h2>Profiles</h2>
-  <div id="profiles"></div>
-
-  <h2>Monthly Progress</h2>
-  <canvas id="progressChart" width="800" height="400"></canvas>
+  <canvas id="distanceChart" width="600" height="200"></canvas>
 
   <script>
-    async function loadProfiles() {
-      const resp = await fetch('data/athletes.json');
-      const data = await resp.json();
-      const leaderboardDiv = document.getElementById('leaderboard');
-      const profilesDiv = document.getElementById('profiles');
+    async function loadLeaderboard() {
+      try {
+        const response = await fetch('data/athletes.json');
+        const data = await response.json();
 
-      // Sort by total monthly distance
-      const leaderboard = Object.values(data.athletes)
-        .sort((a,b) => (b.daily_distance_km || []).reduce((x,y)=>x+y,0) - (a.daily_distance_km || []).reduce((x,y)=>x+y,0));
+        const leaderboardDiv = document.getElementById('leaderboard');
+        leaderboardDiv.innerHTML = ''; // clear placeholder
 
-      // Render leaderboard with medals
-      leaderboardDiv.innerHTML = leaderboard.map((u,i) => {
-        const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-        const totalKm = (u.daily_distance_km || []).reduce((x,y)=>x+y,0).toFixed(1);
-        return `<div class="leaderboard-item">
-                  <span class="medal">${medal}</span>
-                  <span class="name">${u.firstname} ${u.lastname}</span>
-                  <span class="distance">${totalKm} km</span>
-                </div>`;
-      }).join('');
+        // For chart
+        const ctx = document.getElementById('distanceChart').getContext('2d');
+        const datasets = [];
 
-      // Render profile cards
-      profilesDiv.innerHTML = leaderboard.map(u => {
-        const totalKm = (u.daily_distance_km || []).reduce((x,y)=>x+y,0).toFixed(1);
-        return `
-        <div class="profile-card">
-          <img src="${u.profile || 'https://via.placeholder.com/64'}" alt="${u.firstname}" />
-          <h3>${u.firstname} ${u.lastname}</h3>
-          <p>@${u.username || ''}</p>
-          <p>${totalKm} km this month</p>
-        </div>`;
-      }).join('');
-    }
+        Object.values(data.athletes).forEach(user => {
+          // Render leaderboard entry
+          const totalDistance = user.daily_distance_km.reduce((a,b)=>a+b,0).toFixed(2);
+          const div = document.createElement('div');
+          div.innerHTML = `<img src="${user.profile}" width="50">
+                           <strong>${user.firstname} ${user.lastname}</strong> - ${totalDistance} km`;
+          leaderboardDiv.appendChild(div);
 
-    async function drawChart() {
-      const resp = await fetch('data/athletes.json');
-      const data = await resp.json();
+          // Prepare dataset for chart
+          datasets.push({
+            label: `${user.firstname} ${user.lastname}`,
+            data: user.daily_distance_km,
+            fill: false,
+            borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+            tension: 0.1
+          });
+        });
 
-      const labels = Array.from({length:30}, (_,i)=>i+1); // Days 1-30
-
-      const datasets = Object.values(data.athletes).map((athlete, idx)=>({
-        label: athlete.firstname,
-        data: athlete.daily_distance_km || Array(30).fill(0),
-        borderColor: `hsl(${idx*50 % 360},70%,50%)`,
-        backgroundColor: 'transparent',
-        tension: 0.3
-      }));
-
-      const ctx = document.getElementById('progressChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Daily Distance Progress (km)' }
+        // Render line chart
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: Array.from({length: data.athletes[Object.keys(data.athletes)[0]].daily_distance_km.length}, (_, i) => i+1),
+            datasets: datasets
           },
-          scales: {
-            x: { title: { display: true, text: 'Day of Month' } },
-            y: { title: { display: true, text: 'Distance (km)' } }
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom' }
+            },
+            scales: {
+              x: { title: { display: true, text: 'Day of Month' } },
+              y: { title: { display: true, text: 'Distance (km)' }, beginAtZero: true }
+            }
           }
-        }
-      });
+        });
+
+      } catch (err) {
+        console.error('Error loading athletes.json:', err);
+        document.getElementById('leaderboard').innerText = 'Failed to load leaderboard.';
+      }
     }
 
-    loadProfiles().catch(e=>console.error(e));
-    drawChart().catch(e=>console.error(e));
+    loadLeaderboard();
   </script>
 </body>
 </html>
