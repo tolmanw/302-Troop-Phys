@@ -1,0 +1,25 @@
+{
+  "athletes": {
+    "user1": {
+      "firstname": "Jane",
+      "lastname": "Smith",
+      "username": "jane_smith",
+      "profile": "https://via.placeholder.com/64",
+      "monthly_distance_km": 120
+    },
+    "user2": {
+      "firstname": "Mark",
+      "lastname": "Patel",
+      "username": "mark_patel",
+      "profile": "https://via.placeholder.com/64",
+      "monthly_distance_km": 95
+    },
+    "user3": {
+      "firstname": "Zoe",
+      "lastname": "Turner",
+      "username": "zoe_turner",
+      "profile": "https://via.placeholder.com/64",
+      "monthly_distance_km": 80
+    }
+  }
+}
