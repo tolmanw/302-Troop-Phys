@@ -43,5 +43,9 @@
         0
       ]
     }
-  }
+  },
+  "month_names": [
+    "November 2025",
+    "December 2025"
+  ]
 }
