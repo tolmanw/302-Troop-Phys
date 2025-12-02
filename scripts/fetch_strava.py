@@ -10,16 +10,18 @@ REFRESH_TOKENS_JSON = os.environ['STRAVA_REFRESH_TOKENS']
 refresh_tokens = json.loads(REFRESH_TOKENS_JSON)
 now = datetime.now(timezone.utc)
 
+# Function to get the Unix timestamp for the first day of a month
 def get_month_start(year, month):
     return int(datetime(year, month, 1, tzinfo=timezone.utc).timestamp())
 
-# Last month and current month timestamps
-if now.month == 1:
-    last_month_start = get_month_start(now.year - 1, 12)
-else:
-    last_month_start = get_month_start(now.year, now.month - 1)
+# Determine current month and previous month automatically
 current_month_start = get_month_start(now.year, now.month)
-month_starts = [last_month_start, current_month_start]
+if now.month == 1:
+    previous_month_start = get_month_start(now.year-1, 12)
+else:
+    previous_month_start = get_month_start(now.year, now.month-1)
+
+month_starts = [previous_month_start, current_month_start]
 
 athletes_out = {}
 
@@ -43,9 +45,8 @@ for username, info in refresh_tokens.items():
                          headers={"Authorization": f"Bearer {access_token}"})
         athlete = r.json()
 
-        # Monthly distances (last 2 months)
+        # Monthly distances (previous + current month)
         monthly_distances = []
-
         for start in month_starts:
             r = requests.get("https://www.strava.com/api/v3/athlete/activities",
                              headers={"Authorization": f"Bearer {access_token}"},
@@ -59,11 +60,11 @@ for username, info in refresh_tokens.items():
                 print(f"Failed to parse activities for {username}: {r.text}")
                 activities = []
 
-            # Only runs
+            # Only count running activities
             run_activities = [a for a in activities if isinstance(a, dict) and a.get('type') == 'Run']
-            total_km = sum(a.get('distance', 0)/1000 for a in run_activities)
-            monthly_distances.append(round(total_km, 2))
-            print(f"{username} - run activities fetched for month starting {start}: {len(run_activities)}")
+            total_km = sum(a.get('distance',0)/1000 for a in run_activities)
+            monthly_distances.append(round(total_km,2))
+            print(f"{username} - runs fetched for month starting {start}: {len(run_activities)}")
 
         # Daily distances for current month
         days_in_current_month = monthrange(now.year, now.month)[1]
@@ -80,14 +81,12 @@ for username, info in refresh_tokens.items():
             activities = []
 
         for a in activities:
-            if not isinstance(a, dict): 
+            if not isinstance(a, dict) or a.get('type') != 'Run':
                 continue
             try:
-                if a.get('type') != 'Run':
-                    continue
                 day = datetime.fromisoformat(a['start_date_local']).day - 1
                 if 0 <= day < days_in_current_month:
-                    daily_distance[day] += a.get('distance', 0)/1000
+                    daily_distance[day] += a.get('distance',0)/1000
             except Exception:
                 continue
 
