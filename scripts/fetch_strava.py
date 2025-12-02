@@ -1,5 +1,6 @@
 import os, json, requests
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from calendar import monthrange
 
 # Environment variables
 CLIENT_ID = os.environ['STRAVA_CLIENT_ID']
@@ -7,13 +8,21 @@ CLIENT_SECRET = os.environ['STRAVA_CLIENT_SECRET']
 REFRESH_TOKENS_JSON = os.environ['STRAVA_REFRESH_TOKENS']
 
 refresh_tokens = json.loads(REFRESH_TOKENS_JSON)
-
 now = datetime.now(timezone.utc)
-# Timestamps for last month and current month
-month_starts = []
-for i in range(1, -1, -1):
-    first_day = datetime(now.year, now.month, 1, tzinfo=timezone.utc) - timedelta(days=30*i)
-    month_starts.append(int(first_day.timestamp()))
+
+# Calculate exact month start timestamps
+def get_month_start(year, month):
+    return int(datetime(year, month, 1, tzinfo=timezone.utc).timestamp())
+
+# Last month
+if now.month == 1:
+    last_month_start = get_month_start(now.year - 1, 12)
+else:
+    last_month_start = get_month_start(now.year, now.month - 1)
+
+# Current month
+current_month_start = get_month_start(now.year, now.month)
+month_starts = [last_month_start, current_month_start]
 
 athletes_out = {}
 
@@ -54,14 +63,17 @@ for username, info in refresh_tokens.items():
                 activities = []
 
             leg_activities = [a for a in activities if isinstance(a, dict) and a.get('type') in ['Run','Walk','Hike']]
-            total_km = sum(a.get('distance',0)/1000 for a in leg_activities)
-            monthly_distances.append(round(total_km,2))
+            total_km = sum(a.get('distance', 0)/1000 for a in leg_activities)
+            monthly_distances.append(round(total_km, 2))
+            print(f"{username} - activities fetched: {len(leg_activities)} for month starting {start}")
 
-        # Current month daily distances
-        month_start_current = month_starts[-1]
+        # Daily distances for current month
+        days_in_current_month = monthrange(now.year, now.month)[1]
+        daily_distance = [0]*days_in_current_month
+
         r = requests.get("https://www.strava.com/api/v3/athlete/activities",
                          headers={"Authorization": f"Bearer {access_token}"},
-                         params={"after": month_start_current, "per_page": 200})
+                         params={"after": current_month_start, "per_page": 200})
         try:
             activities = r.json()
             if not isinstance(activities, list):
@@ -69,14 +81,13 @@ for username, info in refresh_tokens.items():
         except Exception:
             activities = []
 
-        daily_distance = [0]*30
         for a in activities:
             if not isinstance(a, dict): 
                 continue
             try:
                 day = datetime.fromisoformat(a['start_date_local']).day - 1
-                if 0 <= day < 30:
-                    daily_distance[day] += a.get('distance',0)/1000
+                if 0 <= day < days_in_current_month:
+                    daily_distance[day] += a.get('distance', 0)/1000
             except Exception:
                 continue
 
