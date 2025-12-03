@@ -46,13 +46,13 @@ select {
 }
 .chart-container {
     flex: 1;
-    min-width: 300px;
+    min-width: 280px;
     background: #0d1117;
     border-radius: 10px;
     padding: 10px;
 }
 canvas {
-    height: 180px !important;
+    height: 150px !important;
     width: 100% !important;
 }
 h3 {
@@ -92,8 +92,11 @@ async function loadData(activityType="All") {
 
     Object.entries(data.athletes).forEach(([username, athlete]) => {
 
+        // Distance data
         const monthlyDistance = activityType === "All" ? athlete.monthly_total_miles : athlete.monthly_by_type_miles[activityType];
         const dailyDistance = activityType === "All" ? athlete.daily_total_miles : athlete.daily_by_type_miles[activityType];
+
+        // Time data
         const monthlyTimeArr = activityType === "All" ? athlete.monthly_total_time : athlete.monthly_time_by_type[activityType];
         const dailyTimeArr = activityType === "All" ? athlete.daily_total_time : athlete.daily_time_by_type[activityType];
 
@@ -140,20 +143,21 @@ async function loadData(activityType="All") {
         `;
         container.appendChild(card);
 
-        // Distance charts
+        // Monthly Distance Chart (3 months: previous, current, next)
         new Chart(document.getElementById(`monthChart-${username}`), {
             type: "bar",
             data: { labels: monthNames, datasets: [{ label: "Distance (miles)", data: monthlyDistance, backgroundColor: "rgba(75, 192, 192, 0.6)" }] },
             options: { responsive:true, maintainAspectRatio:true }
         });
 
+        // Daily Distance Chart
         new Chart(document.getElementById(`dailyChart-${username}`), {
             type: "line",
             data: { labels: dailyDistance.map((_, i) => i + 1), datasets: [{ label:"Daily Distance (miles)", data: dailyDistance, borderColor:"rgba(75,192,192,1)", borderWidth:2 }] },
             options: { responsive:true, maintainAspectRatio:true }
         });
 
-        // Time charts
+        // Monthly Time Chart
         new Chart(document.getElementById(`monthTimeChart-${username}`), {
             type: "bar",
             data: { labels: monthNames, datasets: [{ label:"Monthly Time (minutes)", data: hhmmToMinutes(monthlyTimeArr), backgroundColor:"rgba(255,159,64,0.6)" }] },
@@ -164,6 +168,7 @@ async function loadData(activityType="All") {
             }
         });
 
+        // Daily Time Chart
         new Chart(document.getElementById(`dailyTimeChart-${username}`), {
             type: "line",
             data: { labels: dailyDistance.map((_,i)=>i+1), datasets:[{label:"Daily Time (hh:mm)", data:hhmmToMinutes(dailyTimeArr), borderColor:"rgba(255,159,64,1)", borderWidth:2}]},
