@@ -5,11 +5,11 @@
       "lastname": "Tolman",
       "username": "will_tolman",
       "profile": "https://dgalywyr863hv.cloudfront.net/pictures/athletes/15478346/24115300/2/medium.jpg",
-      "monthly_distances": {
-        "All": [
-          12.58,
-          0.0
-        ],
+      "monthly_total": [
+        12.58,
+        0.0
+      ],
+      "monthly_by_type": {
         "Run": [
           12.58,
           0.0
@@ -35,40 +35,40 @@
           0.0
         ]
       },
-      "daily_distance_km": {
-        "All": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
+      "daily_total": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "daily_by_type": {
         "Run": [
           0.0,
           0.0,
@@ -273,14 +273,5 @@
   "month_names": [
     "November 2025",
     "December 2025"
-  ],
-  "activity_types": [
-    "All",
-    "Run",
-    "Trail Run",
-    "Walk",
-    "Hike",
-    "Ride",
-    "Virtual Ride"
   ]
 }
