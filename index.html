@@ -53,6 +53,7 @@
 <!-- Activity Filter -->
 <label>Select Activity Type:</label>
 <select id="activityFilter">
+    <option value="All">All</option>
     <option value="Run">Run</option>
     <option value="Trail Run">Trail Run</option>
     <option value="Walk">Walk</option>
@@ -64,16 +65,18 @@
 <div id="container"></div>
 
 <script>
-async function loadData() {
+async function loadData(activityType="All") {
     const response = await fetch("data/athletes.json");
     const data = await response.json();
-
     const container = document.getElementById("container");
     container.innerHTML = "";
 
-    const monthNames = data.month_names;   // <--- WORKING NOW!
+    const monthNames = data.month_names;
 
     Object.entries(data.athletes).forEach(([username, athlete]) => {
+        const monthlyData = activityType === "All" ? athlete.monthly_total : athlete.monthly_by_type[activityType];
+        const dailyData = activityType === "All" ? athlete.daily_total : athlete.daily_by_type[activityType];
+
         const card = document.createElement("div");
         card.className = "card";
 
@@ -96,39 +99,29 @@ async function loadData() {
 
         container.appendChild(card);
 
-        // Create Charts
         new Chart(document.getElementById(`monthChart-${username}`), {
             type: "bar",
             data: {
                 labels: monthNames,
-                datasets: [{
-                    label: "Distance (km)",
-                    data: athlete.monthly_distances,
-                    backgroundColor: "rgba(75, 192, 192, 0.6)"
-                }]
+                datasets: [{ label: "Distance (km)", data: monthlyData, backgroundColor: "rgba(75, 192, 192, 0.6)" }]
             }
         });
 
         new Chart(document.getElementById(`dailyChart-${username}`), {
             type: "line",
             data: {
-                labels: athlete.daily_distance_km.map((_, i) => i + 1),
-                datasets: [{
-                    label: "Daily Distance (km)",
-                    data: athlete.daily_distance_km,
-                    borderWidth: 2
-                }]
+                labels: dailyData.map((_, i) => i + 1),
+                datasets: [{ label: "Daily Distance (km)", data: dailyData, borderColor: "rgba(75, 192, 192, 1)", borderWidth: 2 }]
             }
         });
     });
 }
 
-loadData();
+const activitySelect = document.getElementById("activityFilter");
+activitySelect.addEventListener("change", () => loadData(activitySelect.value));
 
-// Reload when activity filter changes
-document.getElementById("activityFilter").addEventListener("change", () => {
-    loadData();
-});
+// Initial load
+loadData();
 </script>
 
 </body>
