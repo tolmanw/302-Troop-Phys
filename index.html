@@ -20,24 +20,29 @@ select {
     border: 1px solid #30363d;
     margin-bottom: 20px;
 }
-.card {
+
+/* Athlete info tile */
+.athlete-card {
     background: #1b1f25;
-    padding: 20px;
+    padding: 15px;
     border-radius: 12px;
-    margin-bottom: 30px;
-    box-shadow: 0 0 10px #0005;
-}
-.athlete {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 15px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 8px #0005;
 }
-.athlete img {
+.athlete-card img {
     width: 50px;
     height: 50px;
     border-radius: 50%;
 }
+.athlete-card h2 {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+/* Charts */
 .charts-row {
     display: flex;
     gap: 15px;
@@ -126,17 +131,19 @@ function renderDashboard(activityType="All") {
         const dailyDistance = athlete.daily_distance_km[monthIndex].map(d => +(d*0.621371).toFixed(2));
         const dailyTime = athlete.daily_time_min[monthIndex];
 
-        const card = document.createElement("div");
-        card.className = "card";
+        // Athlete info tile
+        const athleteCard = document.createElement("div");
+        athleteCard.className = "athlete-card";
+        athleteCard.innerHTML = `
+            <img src="${athlete.profile}">
+            <h2>${athlete.firstname} ${athlete.lastname}</h2>
+        `;
+        container.appendChild(athleteCard);
 
-        card.innerHTML = `
-            <div class="athlete">
-                <img src="${athlete.profile}">
-                <div>
-                    <h2>${athlete.firstname} ${athlete.lastname}</h2>
-                </div>
-            </div>
+        // Charts rows
+        const chartsDiv = document.createElement("div");
 
+        chartsDiv.innerHTML = `
             <div class="charts-row">
                 <div class="chart-container">
                     <h3>Monthly Distance </h3>
@@ -159,35 +166,36 @@ function renderDashboard(activityType="All") {
                 </div>
             </div>
         `;
-        container.appendChild(card);
+        container.appendChild(chartsDiv);
 
-        // Monthly Distance
+        // Monthly Distance Chart
         new Chart(document.getElementById(`monthChart-${username}`), {
             type: "bar",
             data: { labels: monthNames, datasets: [{ label: "miles", data: monthlyDistance, backgroundColor: "rgba(75, 192, 192, 0.6)" }] },
             options: { responsive:true, maintainAspectRatio:true, aspectRatio:1.5, scales:{ y:{ beginAtZero:true } } }
         });
 
-        // Monthly Time
+        // Monthly Time Chart
         new Chart(document.getElementById(`monthTimeChart-${username}`), {
             type: "bar",
             data: { labels: monthNames, datasets: [{ label: "minutes", data: monthlyTime, backgroundColor: "rgba(255,159,64,0.6)" }] },
             options: { responsive:true, maintainAspectRatio:true, aspectRatio:1.5, scales:{ y:{ beginAtZero:true } } }
         });
 
-        // Daily Distance
+        // Daily Distance Chart
         new Chart(document.getElementById(`dailyChart-${username}`), {
             type: "line",
             data: { labels: dailyDistance.map((_,i)=>i+1), datasets:[{label:"miles", data:dailyDistance, borderColor:"rgba(75,192,192,1)", borderWidth:2, fill:false}]},
             options: { responsive:true, maintainAspectRatio:true, aspectRatio:1.5, scales:{ y:{ beginAtZero:true } } }
         });
 
-        // Daily Time
+        // Daily Time Chart
         new Chart(document.getElementById(`dailyTimeChart-${username}`), {
             type: "line",
             data: { labels: dailyTime.map((_,i)=>i+1), datasets:[{label:"minutes", data:dailyTime, borderColor:"rgba(255,159,64,1)", borderWidth:2, fill:false}]},
             options: { responsive:true, maintainAspectRatio:true, aspectRatio:1.5, scales:{ y:{ beginAtZero:true } } }
         });
+
     });
 }
 
