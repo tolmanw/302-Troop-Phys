@@ -70,6 +70,7 @@ h3 {
 <body>
 
 <h1>Strava Dashboard</h1>
+
 <label>Select Activity Type:</label>
 <select id="activityFilter">
     <option value="All">All</option>
@@ -81,18 +82,43 @@ h3 {
     <option value="Virtual Ride">Virtual Ride</option>
 </select>
 
+<br><br>
+
+<label>Select Month for Daily Charts:</label>
+<select id="dailyMonthSelector"></select>
+
 <div id="container"></div>
 
 <script>
+let athletesData;
+let monthNames;
+
 async function loadData(activityType="All") {
     const response = await fetch("data/athletes.json");
     const data = await response.json();
+    athletesData = data.athletes;
+    monthNames = data.month_names;
+
+    // populate month selector
+    const monthSelector = document.getElementById("dailyMonthSelector");
+    monthSelector.innerHTML = "";
+    monthNames.forEach((m,i)=>{
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = m;
+        monthSelector.appendChild(opt);
+    });
+    monthSelector.selectedIndex = monthNames.length - 1; // default: current month
+
+    renderDashboard(activityType);
+}
+
+function renderDashboard(activityType="All") {
     const container = document.getElementById("container");
     container.innerHTML = "";
+    const monthIndex = parseInt(document.getElementById("dailyMonthSelector").value);
 
-    const monthNames = data.month_names;
-
-    Object.entries(data.athletes).forEach(([username, athlete]) => {
+    Object.entries(athletesData).forEach(([username, athlete]) => {
 
         const monthlyDistance = athlete.monthly_distances.map(d => +(d*0.621371).toFixed(2));
         const dailyDistance = athlete.daily_distance_km.map(d => +(d*0.621371).toFixed(2));
@@ -130,11 +156,11 @@ async function loadData(activityType="All") {
 
             <div class="charts-row">
                 <div class="chart-container">
-                    <h3>Daily Distance (miles) - ${monthNames[2]}</h3>
+                    <h3>Daily Distance (miles) - ${monthNames[monthIndex]}</h3>
                     <canvas id="dailyChart-${username}"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Daily Time (minutes) - ${monthNames[2]}</h3>
+                    <h3>Daily Time (minutes) - ${monthNames[monthIndex]}</h3>
                     <canvas id="dailyTimeChart-${username}"></canvas>
                 </div>
             </div>
@@ -171,7 +197,10 @@ async function loadData(activityType="All") {
     });
 }
 
-document.getElementById("activityFilter").addEventListener("change", e => loadData(e.target.value));
+// Event listeners
+document.getElementById("activityFilter").addEventListener("change", e => renderDashboard(e.target.value));
+document.getElementById("dailyMonthSelector").addEventListener("change", () => renderDashboard(document.getElementById("activityFilter").value));
+
 loadData();
 </script>
 
