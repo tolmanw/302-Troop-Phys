@@ -47,10 +47,22 @@ select {
 
 .charts-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-rows: auto auto;
     gap: 15px;
-    margin-bottom: 25px;
 }
+
+.charts-top {
+    justify-content: center;
+    width: 85%;
+    margin: 0 auto;
+}
+
+.charts-bottom {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
 .chart-container {
     background: #0d1117;
     border-radius: 10px;
@@ -99,7 +111,6 @@ h3 {
 let athletesData;
 let monthNames;
 
-// Goal line plugin
 Chart.register({
   id: "goalLine",
   afterDatasetsDraw(chart, args, pluginOptions) {
@@ -121,7 +132,7 @@ async function loadData(activityType="All") {
     const response = await fetch("data/athletes.json");
     const data = await response.json();
     athletesData = data.athletes;
-    monthNames = data.month_names.map(m => m.replace(/\s*\d{4}/, '')); // remove any years
+    monthNames = data.month_names.map(m => m.replace(/\s*\d{4}/, ''));
 
     const monthSelector = document.getElementById("dailyMonthSelector");
     monthSelector.innerHTML = "";
@@ -177,21 +188,23 @@ function renderDashboard(activityType="All") {
             </div>
 
             <div class="charts-grid">
-                <div class="chart-container chart-daily">
+                <div class="charts-top chart-container">
                     <h3>Daily Distance - ${monthNames[monthIndex]}</h3>
                     <canvas id="dailyChart-${username}"></canvas>
                 </div>
-                <div class="chart-container chart-extra">
-                    <h3>Extra Phys Goal</h3>
-                    <canvas id="extraChart-${username}"></canvas>
-                </div>
-                <div class="chart-container chart-monthly">
-                    <h3>Monthly Distance</h3>
-                    <canvas id="monthChart-${username}"></canvas>
-                </div>
-                <div class="chart-container chart-monthly">
-                    <h3>Monthly Time</h3>
-                    <canvas id="monthTimeChart-${username}"></canvas>
+                <div class="charts-bottom">
+                    <div class="chart-container">
+                        <h3>Extra Phys Goal</h3>
+                        <canvas id="extraChart-${username}"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Monthly Distance</h3>
+                        <canvas id="monthChart-${username}"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Monthly Time</h3>
+                        <canvas id="monthTimeChart-${username}"></canvas>
+                    </div>
                 </div>
             </div>
         `;
@@ -220,7 +233,7 @@ function renderDashboard(activityType="All") {
             type:"bar",
             data:{ labels: dailyDistanceMi.map((_,i)=>i+1), datasets:[{ data: dailyDistanceMi, backgroundColor:"rgba(75,192,192,0.8)", minBarLength:2, barThickness:6 }] },
             options:{ 
-                responsive:true, maintainAspectRatio:true, aspectRatio:1.6,
+                responsive:true, maintainAspectRatio:true, aspectRatio:1.4,
                 plugins:{ legend:{ display:false } },
                 scales:{ x:{ ticks:{ autoSkip:false, maxRotation:0, minRotation:0, font:{ size: fontSize } } }, y:{ beginAtZero:true } }
             }
