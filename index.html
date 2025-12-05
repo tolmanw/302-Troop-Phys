@@ -57,6 +57,10 @@ select {
     margin: 0 auto;
 }
 
+.charts-top canvas {
+    height: 220px !important; /* fixed height to avoid stretching */
+}
+
 .charts-bottom {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -70,7 +74,6 @@ select {
 }
 canvas {
     width: 100% !important;
-    height: 200px !important;
 }
 h3 {
     margin-bottom: 5px;
@@ -163,7 +166,6 @@ function renderDashboard(activityType="All") {
         let dailyDistanceMi = dailyDistanceKm.map(d => +(d*0.621371).toFixed(2));
 
         const EXTRA_GOAL = 480; 
-
         const extraMonths = monthNames.slice(-2);
         const extraTime = monthlyTime.slice(-2);
         const extraColors = extraTime.map(t => t >= EXTRA_GOAL ? "rgba(0,200,0,0.7)" : "rgba(200,0,0,0.7)");
@@ -226,15 +228,15 @@ function renderDashboard(activityType="All") {
         let extraChart = new Chart(document.getElementById(`extraChart-${username}`), {
             type:"bar",
             data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor: extraColors, borderRadius:0, barThickness:10 }] },
-            options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"lime" } }, scales:{ y:{ beginAtZero:true, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 }, x:{ ticks:{ font:{ size:10 } } } } }
+            options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"lime" } }, scales:{ y:{ beginAtZero:true, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 }, x:{ ticks:{ font:{ size:10 } } } } }
         });
 
-        // Daily distance chart with fixed font size and reduced aspect ratio to prevent stretching
+        // Daily chart: maintainAspectRatio false, fixed canvas height
         let dailyChart = new Chart(document.getElementById(`dailyChart-${username}`), {
             type:"bar",
             data:{ labels: dailyDistanceMi.map((_,i)=>i+1), datasets:[{ data: dailyDistanceMi, backgroundColor:"rgba(75,192,192,0.8)", minBarLength:2, barThickness:6 }] },
             options:{ 
-                responsive:true, maintainAspectRatio:true, aspectRatio:1.2, // reduced to prevent stretching
+                responsive:true, maintainAspectRatio:false, // prevents stretching
                 plugins:{ legend:{ display:false } },
                 scales:{ 
                     x:{ ticks:{ autoSkip:false, maxRotation:0, minRotation:0, font:{ size:10 } } }, 
