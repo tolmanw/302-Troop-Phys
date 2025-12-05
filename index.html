@@ -80,13 +80,23 @@ select {
     background: #0d1117;
     border-radius: 10px;
     padding: 6px;
-    height: 180px; /* fixed height */
-    flex: 1;
+    height: 160px; /* fixed height for monthly and extra charts */
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
 }
 
-.chart-container canvas {
+.daily-chart-container {
+    background: #0d1117;
+    border-radius: 10px;
+    padding: 6px;
+    height: 180px; /* fixed height for daily chart */
+    flex: 0 0 auto; /* prevents stretching */
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-container canvas, .daily-chart-container canvas {
     flex: 1;
     width: 100% !important;
     height: 100% !important;
@@ -179,7 +189,6 @@ function renderDashboard(activityType="All") {
         const dailyDistancesKm = dailyDistancesAll[monthIndex] || [];
         const dailyDistancesMi = dailyDistancesKm.map(d => +(d*0.621371).toFixed(2));
 
-        // Previous month for Extra Phys and monthly charts
         const prevMonthIndex = Math.max(monthIndex - 1, 0);
         const selectedMonthsIdx = [prevMonthIndex, monthIndex];
 
@@ -211,7 +220,7 @@ function renderDashboard(activityType="All") {
             </div>
 
             <div class="charts-grid">
-                <div class="charts-top chart-container">
+                <div class="charts-top daily-chart-container">
                     <h3>Daily Distance - ${MONTH_ABBR[monthIndex]}</h3>
                     <canvas id="dailyChart-${username}"></canvas>
                 </div>
