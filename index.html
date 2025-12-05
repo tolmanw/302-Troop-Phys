@@ -27,7 +27,7 @@ select {
     border-radius: 12px;
     margin-bottom: 25px;
     box-shadow: 0 0 8px #0005;
-    width: 30%; /* slightly larger */
+    width: 40%; /* wider card */
     display: inline-block;
     vertical-align: top;
 }
@@ -60,7 +60,7 @@ select {
 }
 
 .charts-top canvas {
-    height: 180px !important;
+    height: 200px !important;
 }
 
 .charts-bottom {
@@ -235,7 +235,13 @@ function renderDashboard(activityType="All") {
         let extraChart = new Chart(document.getElementById(`extraChart-${username}`), {
             type:"bar",
             data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor: extraColors, barThickness:6 }] },
-            options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"grey" } }, scales:{ y:{ beginAtZero:true, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 }, x:{ ticks:{ font:{ size:10 } } } } }
+            options:{ 
+                responsive:true, 
+                maintainAspectRatio:true, 
+                layout:{ padding:{ top:20, bottom:10, left:10, right:10 } }, // ensures x-axis not at top
+                plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"grey" } }, 
+                scales:{ y:{ beginAtZero:true, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 }, x:{ ticks:{ font:{ size:10 } } } } 
+            }
         });
 
         let dailyChart = new Chart(document.getElementById(`dailyChart-${username}`), {
