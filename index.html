@@ -25,17 +25,19 @@ select {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
+    max-width: 1200px;
+    margin: auto;
 }
 
 .card {
     background: #1b1f25;
-    padding: 15px;
+    padding: 12px;
     border-radius: 12px;
     box-shadow: 0 0 8px #0005;
-    flex: 1 1 400px;
+    width: 380px; /* fixed width */
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .athlete {
@@ -71,14 +73,14 @@ select {
 .charts-bottom {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
 }
 
 .chart-container {
     background: #0d1117;
     border-radius: 10px;
     padding: 6px;
-    height: 200px;
+    height: 180px; /* fixed height */
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -92,7 +94,7 @@ select {
 
 h3 {
     margin-bottom: 4px;
-    margin-top: 8px;
+    margin-top: 6px;
     font-size: 0.9em;
     color: #c9d1d9;
 }
@@ -174,15 +176,13 @@ function renderDashboard(activityType="All") {
         const monthlyTimes = athlete.monthly_time || [];
         const dailyDistancesAll = athlete.daily_distance_km || [];
 
-        // Daily distance chart
         const dailyDistancesKm = dailyDistancesAll[monthIndex] || [];
         const dailyDistancesMi = dailyDistancesKm.map(d => +(d*0.621371).toFixed(2));
 
-        // Determine previous month for current selection
+        // Previous month for Extra Phys and monthly charts
         const prevMonthIndex = Math.max(monthIndex - 1, 0);
         const selectedMonthsIdx = [prevMonthIndex, monthIndex];
 
-        // Labels and data for Extra Phys Goal and Monthly charts
         const extraMonths = selectedMonthsIdx.map(i => MONTH_ABBR[i]);
         const extraTimes = selectedMonthsIdx.map(i => monthlyTimes[i] || 0);
         const extraDistancesKm = selectedMonthsIdx.map(i => monthlyDistances[i] || 0);
