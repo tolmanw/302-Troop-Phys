@@ -41,11 +41,10 @@ select {
     border-radius: 50%;
 }
 
-.charts-row {
-    display: flex;
+.charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
     gap: 15px;
-    flex-wrap: wrap;
-    justify-content: flex-start;
     margin-bottom: 25px;
 }
 .chart-container {
@@ -65,11 +64,7 @@ h3 {
 }
 .unit-toggle {
     margin-bottom: 15px;
-
-/* Specific layout sizes */
-.chart-daily { flex: 2; min-width: 520px; max-width: 700px; }
-.chart-extra { flex: 2; min-width: 520px; max-width: 700px; }
-.chart-monthly { flex: 1.2; min-width: 260px; max-width: 400px; }
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -100,6 +95,7 @@ h3 {
 let athletesData;
 let monthNames;
 
+// Horizontal goal line plugin
 Chart.register({
   id: "goalLine",
   afterDatasetsDraw(chart, args, pluginOptions) {
@@ -153,7 +149,7 @@ function renderDashboard(activityType="All") {
 
         const EXTRA_GOAL = 480; 
 
-        // Only last two months for Extra Phys
+        // Extra Phys last 2 months
         const extraMonths = monthNames.slice(-2);
         const extraTime = monthlyTime.slice(-2);
         const extraColors = extraTime.map(t => t >= EXTRA_GOAL ? "rgba(0,200,0,0.7)" : "rgba(200,0,0,0.7)");
@@ -177,21 +173,15 @@ function renderDashboard(activityType="All") {
                 </select>
             </div>
 
-            <div class="charts-row">
+            <div class="charts-grid">
                 <div class="chart-container chart-daily">
                     <h3>Daily Distance - ${monthNames[monthIndex]}</h3>
                     <canvas id="dailyChart-${username}"></canvas>
                 </div>
-            </div>
-
-            <div class="charts-row">
                 <div class="chart-container chart-extra">
                     <h3>Extra Phys Goal</h3>
                     <canvas id="extraChart-${username}"></canvas>
                 </div>
-            </div>
-
-            <div class="charts-row">
                 <div class="chart-container chart-monthly">
                     <h3>Monthly Distance</h3>
                     <canvas id="monthChart-${username}"></canvas>
@@ -218,16 +208,16 @@ function renderDashboard(activityType="All") {
 
         let extraChart = new Chart(document.getElementById(`extraChart-${username}`), {
             type:"bar",
-            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor: extraColors, borderRadius:0 }] },
+            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor: extraColors, borderRadius:0, barThickness:10 }] },
             options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.5, plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"lime" } }, scales:{ y:{ beginAtZero:true, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 } } }
         });
 
         let fontSize = dailyDistanceMi.length > 20 ? 8 : 12;
         let dailyChart = new Chart(document.getElementById(`dailyChart-${username}`), {
             type:"bar",
-            data:{ labels: dailyDistanceMi.map((_,i)=>i+1), datasets:[{ data: dailyDistanceMi, backgroundColor:"rgba(75,192,192,0.8)", minBarLength:2 }] },
+            data:{ labels: dailyDistanceMi.map((_,i)=>i+1), datasets:[{ data: dailyDistanceMi, backgroundColor:"rgba(75,192,192,0.8)", minBarLength:2, barThickness:6 }] },
             options:{ 
-                responsive:true, maintainAspectRatio:true, aspectRatio:1.5, plugins:{ legend:{ display:false } },
+                responsive:true, maintainAspectRatio:true, aspectRatio:2, plugins:{ legend:{ display:false } },
                 scales:{ x:{ ticks:{ autoSkip:false, maxRotation:0, minRotation:0, font:{ size: fontSize } } }, y:{ beginAtZero:true } }
             }
         });
