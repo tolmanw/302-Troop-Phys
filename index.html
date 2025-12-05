@@ -23,7 +23,7 @@ select {
 
 .card {
     background: #1b1f25;
-    padding: 20px;
+    padding: 15px;
     border-radius: 12px;
     margin-bottom: 30px;
     box-shadow: 0 0 10px #0005;
@@ -32,13 +32,17 @@ select {
 .athlete {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 .athlete img {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
+}
+.athlete h2 {
+    font-size: 1em;
+    margin: 0;
 }
 
 .charts-grid {
@@ -63,7 +67,7 @@ h3 {
     color: #c9d1d9;
 }
 .unit-toggle {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 </style>
 
@@ -95,7 +99,7 @@ h3 {
 let athletesData;
 let monthNames;
 
-// Horizontal goal line plugin
+// Goal line plugin
 Chart.register({
   id: "goalLine",
   afterDatasetsDraw(chart, args, pluginOptions) {
@@ -117,7 +121,7 @@ async function loadData(activityType="All") {
     const response = await fetch("data/athletes.json");
     const data = await response.json();
     athletesData = data.athletes;
-    monthNames = data.month_names;
+    monthNames = data.month_names.map(m => m.replace(/\s*\d{4}/, '')); // remove any years
 
     const monthSelector = document.getElementById("dailyMonthSelector");
     monthSelector.innerHTML = "";
@@ -149,7 +153,6 @@ function renderDashboard(activityType="All") {
 
         const EXTRA_GOAL = 480; 
 
-        // Extra Phys last 2 months
         const extraMonths = monthNames.slice(-2);
         const extraTime = monthlyTime.slice(-2);
         const extraColors = extraTime.map(t => t >= EXTRA_GOAL ? "rgba(0,200,0,0.7)" : "rgba(200,0,0,0.7)");
@@ -197,19 +200,19 @@ function renderDashboard(activityType="All") {
         let monthChart = new Chart(document.getElementById(`monthChart-${username}`), {
             type: "bar",
             data: { labels: monthNames, datasets: [{ data: monthlyDistanceMi, backgroundColor:"rgba(75,192,192,0.6)" }] },
-            options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
+            options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true }, x:{ ticks:{ font:{ size:10 } } } } }
         });
 
         let monthTimeChart = new Chart(document.getElementById(`monthTimeChart-${username}`), {
             type: "bar",
             data: { labels: monthNames, datasets:[{ data: monthlyTime, backgroundColor:"rgba(255,159,64,0.6)" }] },
-            options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
+            options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true }, x:{ ticks:{ font:{ size:10 } } } } }
         });
 
         let extraChart = new Chart(document.getElementById(`extraChart-${username}`), {
             type:"bar",
             data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor: extraColors, borderRadius:0, barThickness:10 }] },
-            options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"lime" } }, scales:{ y:{ beginAtZero:true, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 } } }
+            options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"lime" } }, scales:{ y:{ beginAtZero:true, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 }, x:{ ticks:{ font:{ size:10 } } } } }
         });
 
         let fontSize = dailyDistanceMi.length > 20 ? 8 : 12;
@@ -217,7 +220,7 @@ function renderDashboard(activityType="All") {
             type:"bar",
             data:{ labels: dailyDistanceMi.map((_,i)=>i+1), datasets:[{ data: dailyDistanceMi, backgroundColor:"rgba(75,192,192,0.8)", minBarLength:2, barThickness:6 }] },
             options:{ 
-                responsive:true, maintainAspectRatio:true, aspectRatio:1.6, // scaled down by 20%
+                responsive:true, maintainAspectRatio:true, aspectRatio:1.6,
                 plugins:{ legend:{ display:false } },
                 scales:{ x:{ ticks:{ autoSkip:false, maxRotation:0, minRotation:0, font:{ size: fontSize } } }, y:{ beginAtZero:true } }
             }
