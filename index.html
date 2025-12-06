@@ -194,32 +194,17 @@ function updateDailyChart(alias, monthIndex){
             plugins:{ legend:{ display:false } },
             scales:{
                 x:{
-                    title:{
-                        display:true,
-                        text:'Days',
-                        color:'#c9d1d9',
-                        font:{ size: FONT_SIZE, weight:'normal', family:'Arial, sans-serif' }
-                    },
                     ticks:{
                         autoSkip:false,
                         maxRotation:0,
                         minRotation:0,
-                        font:{ size: FONT_SIZE, family:'Arial, sans-serif', weight:'normal' },
+                        font:{ size: FONT_SIZE },
                         callback: function(value, index){
                             return (index % 2 === 0) ? this.getLabelForValue(value) : '';
                         }
                     }
                 },
-                y:{
-                    beginAtZero:true,
-                    title:{
-                        display:true,
-                        text:'Miles',
-                        color:'#c9d1d9',
-                        font:{ size: FONT_SIZE, weight:'normal', family:'Arial, sans-serif' }
-                    },
-                    ticks:{ font:{ size: FONT_SIZE, family:'Arial, sans-serif' } }
-                }
+                y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE } } }
             }
         }
     });
@@ -285,14 +270,14 @@ function renderDashboard(activityType="All"){
         CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`), {
             type:"bar",
             data:{ labels: extraMonths, datasets:[{ data: [monthlyDistanceMi[prevMonthIndex], monthlyDistanceMi[monthIndex]], backgroundColor:"rgba(75,192,192,0.6)", barThickness: BAR_THICKNESS }] },
-            options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE, family:'Arial, sans-serif' } } }, x:{ ticks:{ font:{ size: FONT_SIZE, family:'Arial, sans-serif' } } } } }
+            options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE } } }, x:{ ticks:{ font:{ size: FONT_SIZE } } } } }
         });
 
         // Monthly time
         CHARTS[`monthTimeChart-${alias}`] = new Chart(document.getElementById(`monthTimeChart-${alias}`), {
             type:"bar",
             data:{ labels: extraMonths, datasets:[{ data: [monthlyTime[prevMonthIndex], monthlyTime[monthIndex]], backgroundColor:"rgba(255,159,64,0.6)", barThickness: BAR_THICKNESS }] },
-            options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE, family:'Arial, sans-serif' } } }, x:{ ticks:{ font:{ size: FONT_SIZE, family:'Arial, sans-serif' } } } } }
+            options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE } } }, x:{ ticks:{ font:{ size: FONT_SIZE } } } } }
         });
 
         // Extra Phys Goal chart with dashed complementary goal line
@@ -323,8 +308,8 @@ function renderDashboard(activityType="All"){
                 maintainAspectRatio:false,
                 plugins:{ legend:{ display:false } },
                 scales:{
-                    y:{ beginAtZero:true, max: Math.max(...extraTime, EXTRA_GOAL)+100, ticks:{ font:{ size: FONT_SIZE, family:'Arial, sans-serif' } } },
-                    x:{ ticks:{ font:{ size: FONT_SIZE, family:'Arial, sans-serif' } } }
+                    y:{ beginAtZero:true, max: Math.max(...extraTime, EXTRA_GOAL)+100, ticks:{ font:{ size: FONT_SIZE } } },
+                    x:{ ticks:{ font:{ size: FONT_SIZE } } }
                 }
             },
             plugins:[goalLinePlugin]
