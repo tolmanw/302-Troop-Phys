@@ -1,3 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strava Dashboard</title>
+
+<style>
+/* === General dark theme === */
+body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+select {
+    background: #21262d;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    margin-bottom: 10px;
+}
+
+.card {
+    /* === TILE SIZE: change width to scale tile === */
+    width: 320px;  
+    padding: 10px;
+    border-radius: 12px;
+    background: #1b1f25;
+    box-shadow: 0 0 10px #0005;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.athlete {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.athlete img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+.athlete h2 {
+    font-size: 1em;
+    margin: 0;
+}
+
+.charts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.daily-chart-container {
+    height: 160px; /* === DAILY CHART HEIGHT === */
+}
+
+.chart-row {
+    display: flex;
+    gap: 10px;
+}
+
+.small-chart {
+    flex: 1;
+    height: 120px; /* === SMALL CHART HEIGHT === */
+}
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+h3 {
+    margin-bottom: 5px;
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #c9d1d9;
+}
+
+.unit-toggle {
+    margin-bottom: 10px;
+}
+
+/* === Mobile-friendly: stack charts vertically on small screens === */
+@media (max-width: 600px) {
+    .card {
+        width: 100%;
+    }
+    .chart-row {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h1>Strava Dashboard</h1>
+
+<label>Select Activity Type:</label>
+<select id="activityFilter">
+    <option value="All">All</option>
+    <option value="Run">Run</option>
+    <option value="Trail Run">Trail Run</option>
+    <option value="Walk">Walk</option>
+    <option value="Hike">Hike</option>
+    <option value="Ride">Ride</option>
+    <option value="Virtual Ride">Virtual Ride</option>
+</select>
+
+<br><br>
+
+<label>Select Month for Daily Charts:</label>
+<select id="dailyMonthSelector"></select>
+
+<div id="container"></div>
+
+<script>
+let athletesData;
+let monthNames;
+const CHARTS = {}; // chart references
+
+Chart.register({
+  id: "goalLine",
+  afterDatasetsDraw(chart, args, pluginOptions) {
+    if (!pluginOptions || !pluginOptions.lineAt) return;
+    const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+    const yPos = y.getPixelForValue(pluginOptions.lineAt);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(left, yPos);
+    ctx.lineTo(right, yPos);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = pluginOptions.color || "blue";
+    ctx.stroke();
+    ctx.restore();
+  }
+});
+
+async function loadData(activityType="All") {
+    const response = await fetch("data/athletes.json");
+    const data = await response.json();
+    athletesData = data.athletes;
+    monthNames = data.month_names.map(m => m.replace(/\s*\d{4}/, ''));
+
+    const monthSelector = document.getElementById("dailyMonthSelector");
+    monthSelector.innerHTML = "";
+    monthNames.forEach((m,i)=>{
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = m;
+        monthSelector.appendChild(opt);
+    });
+    monthSelector.selectedIndex = monthNames.length - 1;
+
+    populateActivityFilter();
+    renderDashboard(activityType);
+}
+
+function populateActivityFilter(){
+    const select = document.getElementById("activityFilter");
+    if (!athletesData) return;
+    const found = new Set();
+    Object.values(athletesData).forEach(a => {
+        if (Array.isArray(a.activity_types)) {
+            a.activity_types.forEach(t => found.add(t));
+        }
+    });
+    Array.from(found).sort().forEach(t => {
+        let exists = false;
+        for (let i=0;i<select.options.length;i++){
+            if (select.options[i].value === t) { exists = true; break; }
+        }
+        if (!exists){
+            const opt = document.createElement("option");
+            opt.value = t;
+            opt.textContent = t;
+            select.appendChild(opt);
+        }
+    });
+}
+
+function destroyChartIfExists(id){
+    if (CHARTS[id]) {
+        try { CHARTS[id].destroy(); } catch(e){}
+        delete CHARTS[id];
+    }
+}
+
 function renderDashboard(activityType="All") {
     const container = document.getElementById("container");
     container.innerHTML = "";
@@ -6,7 +201,6 @@ function renderDashboard(activityType="All") {
 
     Object.entries(athletesData).forEach(([alias, athlete]) => {
 
-        // filter by type if exists
         if (activityType !== "All" && athlete.activity_types && !athlete.activity_types.includes(activityType)) return;
 
         const monthlyDistanceKm = athlete.monthly_distances;
@@ -63,13 +257,12 @@ function renderDashboard(activityType="All") {
         `;
         container.appendChild(card);
 
-        // destroy previous charts if exist
         destroyChartIfExists(`monthChart-${alias}`);
         destroyChartIfExists(`monthTimeChart-${alias}`);
         destroyChartIfExists(`extraChart-${alias}`);
         destroyChartIfExists(`dailyChart-${alias}`);
 
-        // monthly charts
+        // Charts
         CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`), {
             type:"bar",
             data:{ labels: monthNames, datasets:[{ data: monthlyDistanceMi, backgroundColor:"rgba(75,192,192,0.6)", barThickness:15 }] },
@@ -94,7 +287,7 @@ function renderDashboard(activityType="All") {
             options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ display:false } }, scales:{ x:{ ticks:{ autoSkip:false, maxRotation:0, minRotation:0, font:{ size:8 } } }, y:{ beginAtZero:true, ticks:{ font:{ size:8 } } } } }
         });
 
-        // unit toggle listener
+        // unit toggle
         document.getElementById(`unit-${alias}`).addEventListener("change", e=>{
             const unit = e.target.value;
             let monthlyData = unit==="km"? monthlyDistanceKm: monthlyDistanceMi;
@@ -108,3 +301,12 @@ function renderDashboard(activityType="All") {
         });
     });
 }
+
+document.getElementById("activityFilter").addEventListener("change", e => renderDashboard(e.target.value));
+document.getElementById("dailyMonthSelector").addEventListener("change", () => renderDashboard(document.getElementById("activityFilter").value));
+
+loadData();
+</script>
+
+</body>
+</html>
