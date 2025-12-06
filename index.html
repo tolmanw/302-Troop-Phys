@@ -7,7 +7,7 @@
 
 <style>
 :root {
-    --daily-width: 315px;
+    --daily-width: 320px;
     --daily-height: 180px;
     --bottom-width: 130px;
     --bottom-height: 140px;
@@ -125,7 +125,7 @@ let monthNames;
 const CHARTS = {};
 const FONT_SIZE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size'));
 const TITLE_SIZE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'));
-const BAR_THICKNESS = 10; // Global bar thickness
+const BAR_THICKNESS = 8; // Global bar thickness
 
 async function loadData(activityType="All") {
     const response = await fetch("data/athletes.json");
