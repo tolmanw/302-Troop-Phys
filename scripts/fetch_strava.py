@@ -11,7 +11,7 @@ ALIASES_JSON = os.environ.get("ATHLETE_ALIASES", "{}")
 refresh_tokens = json.loads(REFRESH_TOKENS_JSON)
 USERNAME_ALIASES = json.loads(ALIASES_JSON)
 
-# Create a lowercase mapping for case-insensitive matching
+# Case-insensitive mapping
 USERNAME_ALIASES_LOWER = {k.lower(): v for k, v in USERNAME_ALIASES.items()}
 
 # --- All Strava activity types ---
@@ -77,16 +77,17 @@ athletes_out = {}
 prev_ts, month_starts = get_last_three_month_starts()
 month_names = [m.strftime("%B %Y") for m in month_starts]
 
+found_athletes = []
+skipped_athletes = []
+
 for username, info in refresh_tokens.items():
     access_token = refresh_access_token(info["refresh_token"])
     if not access_token:
         print(f"Failed to refresh token for {username}")
         continue
 
-    # Fetch activities
     activities = fetch_activities(access_token, prev_ts[0])
     activities = [a for a in activities if a.get("type") in activity_types]
-    print(f"Fetched {len(activities)} activities for {username}")
 
     monthly_distance = [0.0, 0.0, 0.0]
     monthly_time_min = [0.0, 0.0, 0.0]
@@ -111,24 +112,23 @@ for username, info in refresh_tokens.items():
                 daily_distance[idx][day_idx] += dist_km
                 daily_time_min[idx][day_idx] += time_min
 
-    # Fetch profile via HTTPS
     athlete_url = "https://www.strava.com/api/v3/athlete"
     headers = {"Authorization": f"Bearer {access_token}"}
     profile_data = requests.get(athlete_url, headers=headers).json()
     profile_img = profile_data.get("profile","")
 
-    # Get real name
     real_name = f"{profile_data.get('firstname','')} {profile_data.get('lastname','')}"
-    print(f"Found athlete: '{real_name}'")  # Debug output
+    print(f"Found athlete: '{real_name}'")  # Debug
 
-    # Map to alias securely
     alias = USERNAME_ALIASES_LOWER.get(real_name.lower())
     if not alias:
         print(f"Skipping {real_name}: no alias defined")
+        skipped_athletes.append(real_name)
         continue
 
+    found_athletes.append(real_name)
     athletes_out[alias] = {
-        "display_name": alias,  # front-end only sees alias
+        "display_name": alias,
         "profile": profile_img,
         "monthly_distances": [round(d,2) for d in monthly_distance],
         "monthly_time": [round(t) for t in monthly_time_min],
@@ -140,4 +140,6 @@ os.makedirs("data", exist_ok=True)
 with open("data/athletes.json","w") as f:
     json.dump({"athletes":athletes_out,"month_names":month_names},f,indent=2)
 
-print("athletes.json updated successfully.")
+print(f"athletes.json updated successfully.")
+print(f"Found athletes: {found_athletes}")
+print(f"Skipped athletes (no alias): {skipped_athletes}")
