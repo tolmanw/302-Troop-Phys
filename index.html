@@ -6,12 +6,25 @@
 <title>Strava Dashboard</title>
 
 <style>
+/* === Adjustable constants === */
+:root {
+    --card-width: 320px;        /* Width of each athlete card */
+    --card-gap: 20px;           /* Gap between cards */
+    --daily-height: 200px;      /* Height of daily chart */
+    --bottom-height: 150px;     /* Height of bottom charts */
+    --bottom-width: 100px;      /* Width of bottom charts */
+    --font-size: 8px;           /* Chart axis font */
+    --title-size: 12px;         /* Chart title font */
+}
+
+/* === Page Styling === */
 body {
     background: #0d1117;
     color: #e6edf3;
     font-family: Arial, sans-serif;
     padding: 20px;
 }
+
 select {
     background: #21262d;
     color: white;
@@ -21,18 +34,30 @@ select {
     margin-bottom: 10px;
 }
 
-.card {
-    background: #1b1f25;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 30px;
+/* === Container for all athlete cards === */
+#container {
+    display: flex;
+    flex-direction: column;       /* stacked cards */
+    gap: var(--card-gap);
+    align-items: flex-start;      /* left-align */
 }
 
+/* === Athlete Card === */
+.card {
+    width: var(--card-width);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background: #1b1f25;
+    border-radius: 12px;
+}
+
+/* Athlete header */
 .athlete {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px;
 }
 .athlete img {
     width: 40px;
@@ -49,43 +74,42 @@ select {
     background: #2a2e36;
     border: 1px solid #555;
     border-radius: 10px;
-    padding: 10px;
+    padding: 5px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-/* === Daily chart on top === */
+/* Daily chart on top */
 .daily-chart-wrapper {
-    margin: 0 auto 20px auto;
+    width: 100%;
+    height: var(--daily-height);
 }
 .daily-chart-wrapper canvas {
     width: 100% !important;
     height: 100% !important;
 }
 
-/* === Bottom 1x3 charts === */
+/* Bottom 1x3 charts */
 .bottom-charts {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap; /* wrap on mobile */
+    gap: 5px;
 }
 
 .bottom-charts .chart-tile {
-    flex: 1;
-    min-width: 150px; 
+    width: var(--bottom-width);
+    height: var(--bottom-height);
 }
 
-/* Chart title styling */
 .chart-tile h3 {
     margin: 0 0 5px 0;
-    font-size: 0.85em; 
+    font-size: var(--title-size);
     color: #c9d1d9;
 }
 
-/* Distance unit selector */
+/* Unit selector */
 .unit-toggle {
     margin-bottom: 10px;
 }
@@ -114,16 +138,11 @@ let athletesData;
 let monthNames;
 const CHARTS = {}; // chart references
 
-// === Adjustable constants ===
-const FONT_SIZE = 8;         // axis labels
-const TITLE_SIZE = 12;       // chart titles
-const DAILY_HEIGHT = 220;    // daily chart height
-const DAILY_WIDTH = 600;     // daily chart width
-const BOTTOM_HEIGHT = 180;   // bottom charts height
-const BOTTOM_WIDTH = 180;    // bottom chart width (for fixed size, optional)
-const BAR_THICKNESS = 15;    // bar width
-const EXTRA_GOAL = 480;      // extra goal line
+// === Chart font & title constants ===
+const FONT_SIZE = 8;
+const TITLE_SIZE = 12;
 
+// === Goal line plugin ===
 Chart.register({
   id: "goalLine",
   afterDatasetsDraw(chart, args, pluginOptions) {
@@ -141,6 +160,7 @@ Chart.register({
   }
 });
 
+// === Load data ===
 async function loadData(activityType="All") {
     const response = await fetch("data/athletes.json");
     const data = await response.json();
@@ -171,11 +191,7 @@ function populateActivityFilter(){
         }
     });
     Array.from(found).sort().forEach(t => {
-        let exists = false;
-        for (let i=0;i<select.options.length;i++){
-            if (select.options[i].value === t) { exists = true; break; }
-        }
-        if (!exists){
+        if (![...select.options].some(opt => opt.value === t)){
             const opt = document.createElement("option");
             opt.value = t;
             opt.textContent = t;
@@ -191,6 +207,7 @@ function destroyChartIfExists(id){
     }
 }
 
+// === Render dashboard ===
 function renderDashboard(activityType="All") {
     const container = document.getElementById("container");
     container.innerHTML = "";
@@ -208,6 +225,7 @@ function renderDashboard(activityType="All") {
         const dailyDistanceKm = (athlete.daily_distance_km && athlete.daily_distance_km[monthIndex]) ? athlete.daily_distance_km[monthIndex] : [];
         const dailyDistanceMi = dailyDistanceKm.map(d => +(d*0.621371).toFixed(2));
 
+        const EXTRA_GOAL = 480;
         const extraMonths = monthNames.slice(-2);
         const extraTime = monthlyTime.slice(-2);
 
@@ -228,21 +246,21 @@ function renderDashboard(activityType="All") {
                 </select>
             </div>
 
-            <div class="daily-chart-wrapper chart-tile" style="height:${DAILY_HEIGHT}px; max-width:${DAILY_WIDTH}px;">
+            <div class="daily-chart-wrapper chart-tile">
                 <h3 style="font-size:${TITLE_SIZE}px;">Daily Distance - ${monthNames[monthIndex]}</h3>
                 <canvas id="dailyChart-${alias}"></canvas>
             </div>
 
             <div class="bottom-charts">
-                <div class="chart-tile" style="height:${BOTTOM_HEIGHT}px; max-width:${BOTTOM_WIDTH}px;">
+                <div class="chart-tile">
                     <h3 style="font-size:${TITLE_SIZE}px;">Extra Phys Goal</h3>
                     <canvas id="extraChart-${alias}"></canvas>
                 </div>
-                <div class="chart-tile" style="height:${BOTTOM_HEIGHT}px; max-width:${BOTTOM_WIDTH}px;">
+                <div class="chart-tile">
                     <h3 style="font-size:${TITLE_SIZE}px;">Monthly Distance</h3>
                     <canvas id="monthChart-${alias}"></canvas>
                 </div>
-                <div class="chart-tile" style="height:${BOTTOM_HEIGHT}px; max-width:${BOTTOM_WIDTH}px;">
+                <div class="chart-tile">
                     <h3 style="font-size:${TITLE_SIZE}px;">Monthly Time</h3>
                     <canvas id="monthTimeChart-${alias}"></canvas>
                 </div>
@@ -258,7 +276,7 @@ function renderDashboard(activityType="All") {
         // === Daily Chart ===
         CHARTS[`dailyChart-${alias}`] = new Chart(document.getElementById(`dailyChart-${alias}`), {
             type: "bar",
-            data:{ labels: dailyDistanceMi.map((_,i)=>i+1), datasets:[{ data: dailyDistanceMi, backgroundColor:"rgba(75,192,192,0.8)", minBarLength:2, barThickness:BAR_THICKNESS }] },
+            data:{ labels: dailyDistanceMi.map((_,i)=>i+1), datasets:[{ data: dailyDistanceMi, backgroundColor:"rgba(75,192,192,0.8)", minBarLength:2, barThickness:15 }] },
             options:{ 
                 responsive:true,
                 maintainAspectRatio:true,
@@ -273,33 +291,22 @@ function renderDashboard(activityType="All") {
         // === Monthly Distance Chart ===
         CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`), {
             type:"bar",
-            data:{ labels: monthNames, datasets:[{ data: monthlyDistanceMi, backgroundColor:"rgba(75,192,192,0.6)", barThickness:BAR_THICKNESS }] },
+            data:{ labels: monthNames, datasets:[{ data: monthlyDistanceMi, backgroundColor:"rgba(75,192,192,0.6)", barThickness:15 }] },
             options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE } } }, x:{ ticks:{ font:{ size: FONT_SIZE } } } } }
         });
 
         // === Monthly Time Chart ===
         CHARTS[`monthTimeChart-${alias}`] = new Chart(document.getElementById(`monthTimeChart-${alias}`), {
             type:"bar",
-            data:{ labels: monthNames, datasets:[{ data: monthlyTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:BAR_THICKNESS }] },
+            data:{ labels: monthNames, datasets:[{ data: monthlyTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:15 }] },
             options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE } } }, x:{ ticks:{ font:{ size: FONT_SIZE } } } } }
         });
 
         // === Extra Goal Chart ===
         CHARTS[`extraChart-${alias}`] = new Chart(document.getElementById(`extraChart-${alias}`), {
             type:"bar",
-            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:BAR_THICKNESS }] },
-            options:{ 
-                responsive:true,
-                maintainAspectRatio:true,
-                plugins:{ 
-                    legend:{ display:false }, 
-                    goalLine:{ lineAt:EXTRA_GOAL, color:"blue" } 
-                }, 
-                scales:{ 
-                    y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE }, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 }, min:0 }, 
-                    x:{ ticks:{ font:{ size: FONT_SIZE } } } 
-                } 
-            }
+            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:15 }] },
+            options:{ responsive:true, maintainAspectRatio:true, plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"blue" } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE }, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 }, x:{ ticks:{ font:{ size: FONT_SIZE } } } } } }
         });
 
         document.getElementById(`unit-${alias}`).addEventListener("change", e=>{
