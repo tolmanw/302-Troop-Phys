@@ -8,10 +8,26 @@ CLIENT_SECRET = os.environ['STRAVA_CLIENT_SECRET']
 REFRESH_TOKENS_JSON = os.environ['STRAVA_REFRESH_TOKENS']
 
 refresh_tokens = json.loads(REFRESH_TOKENS_JSON)
-activity_types = ['Run', 'Trail Run', 'Walk', 'Hike', 'Ride', 'Virtual Ride']
+
+# --- All Strava activity types ---
+activity_types = [
+    # Foot Sports
+    "Run", "Trail Run", "Walk", "Hike", "Virtual Run",
+    # Cycle Sports
+    "Ride", "Mountain Bike Ride", "Gravel Ride", "E-Bike Ride", "E-Mountain Bike Ride",
+    "Velomobile", "Virtual Ride",
+    # Water Sports
+    "Canoe", "Kayak", "Kitesurf", "Rowing", "Stand Up Paddling", "Surf", "Swim", "Windsurf", "Sail",
+    # Winter Sports
+    "Ice Skate", "Alpine Ski", "Backcountry Ski", "Nordic Ski", "Snowboard", "Snowshoe",
+    # Other Sports
+    "Handcycle", "Inline Skate", "Rock Climb", "Roller Ski", "Golf", "Skateboard", "Football (Soccer)",
+    "Wheelchair", "Badminton", "Tennis", "Pickleball", "Crossfit", "Elliptical", "Stair Stepper",
+    "Weight Training", "Yoga", "Workout", "HIIT", "Pilates", "Table Tennis", "Squash", "Racquetball",
+    "Virtual Rowing"
+]
 
 # Map real usernames to public aliases
-# Keep this only in the server code; never output to client
 USERNAME_ALIASES = {
     "will_tolman": "TO2388",
     # add more here for other athletes
