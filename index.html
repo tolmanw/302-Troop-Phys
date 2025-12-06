@@ -7,7 +7,7 @@
 
 <style>
 :root {
-    --daily-width: 325px;
+    --daily-width: 310px;
     --daily-height: 180px;
     --bottom-width: 130px;
     --bottom-height: 140px;
@@ -112,7 +112,7 @@ select {
     <option value="All">All</option>
 </select>
 
-<br>
+<br><br>
 
 <label>Select Month for Daily Charts:</label>
 <select id="dailyMonthSelector"></select>
@@ -125,7 +125,7 @@ let monthNames;
 const CHARTS = {};
 const FONT_SIZE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size'));
 const TITLE_SIZE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'));
-const BAR_THICKNESS = 8; // Global bar thickness
+const BAR_THICKNESS = 15; // Global bar thickness
 
 async function loadData(activityType="All") {
     const response = await fetch("data/athletes.json");
@@ -194,6 +194,12 @@ function updateDailyChart(alias, monthIndex){
             plugins:{ legend:{ display:false } },
             scales:{
                 x:{
+                    title:{
+                        display:true,
+                        text:'Days',
+                        color:'#c9d1d9',
+                        font:{ size: FONT_SIZE+2, weight:'bold' }
+                    },
                     ticks:{
                         autoSkip:false,
                         maxRotation:0,
@@ -204,7 +210,16 @@ function updateDailyChart(alias, monthIndex){
                         }
                     }
                 },
-                y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE } } }
+                y:{
+                    beginAtZero:true,
+                    title:{
+                        display:true,
+                        text:'Miles',
+                        color:'#c9d1d9',
+                        font:{ size: FONT_SIZE+2, weight:'bold' }
+                    },
+                    ticks:{ font:{ size: FONT_SIZE } }
+                }
             }
         }
     });
