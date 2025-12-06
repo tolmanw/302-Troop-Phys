@@ -13,8 +13,9 @@
     --bottom-height: 140px;     /* Bottom charts height */
     --card-width: 350px;        /* Card width */
     --card-gap: 20px;           /* Gap between cards */
+    --chart-padding: 10;        /* Padding inside charts */
     --font-size: 8px;           /* Axis font size */
-    --title-size: 8px;          /* Chart title font size */
+    --title-size: 10px;         /* Chart title font size */
 }
 
 body {
@@ -24,14 +25,29 @@ body {
     padding: 20px;
 }
 
+select {
+    background: #21262d;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    margin-bottom: 10px;
+}
+
+#container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--card-gap);
+    justify-content: flex-start;
+}
+
 .card {
     background: #1b1f25;
     padding: 10px;
     border-radius: 12px;
-    margin-bottom: var(--card-gap);
     width: var(--card-width);
-    display: inline-block;
-    vertical-align: top;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .athlete {
@@ -50,6 +66,7 @@ body {
     margin: 0;
 }
 
+/* Chart tile wrapper */
 .chart-tile {
     background: #2a2e36;
     border: 1px solid #555;
@@ -59,6 +76,7 @@ body {
     flex-direction: column;
 }
 
+/* Daily chart on top */
 .daily-chart-wrapper {
     width: var(--daily-width);
     height: var(--daily-height);
@@ -69,6 +87,7 @@ body {
     height: 100% !important;
 }
 
+/* Bottom charts: 1x3 layout */
 .bottom-charts {
     display: flex;
     justify-content: space-between;
@@ -83,6 +102,7 @@ body {
     width: 100% !important;
 }
 
+/* Chart title styling */
 .chart-tile h3 {
     margin: 0 0 3px 0;
     font-size: var(--title-size);
@@ -90,6 +110,9 @@ body {
     text-align: center;
 }
 
+.unit-toggle {
+    margin-bottom: 10px;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -116,9 +139,7 @@ let monthNames;
 const CHARTS = {};
 const FONT_SIZE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size'));
 const TITLE_SIZE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'));
-
-// Padding constant for all charts
-const CHART_PADDING = { top: 10, right: 10, bottom: 15, left: 10 };
+const CHART_PADDING = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--chart-padding'));
 
 Chart.register({
   id: "goalLine",
@@ -130,7 +151,7 @@ Chart.register({
     ctx.beginPath();
     ctx.moveTo(left, yPos);
     ctx.lineTo(right, yPos);
-    ctx.lineWidth = pluginOptions.lineWidth || 2;
+    ctx.lineWidth = 2;
     ctx.strokeStyle = pluginOptions.color || "blue";
     ctx.stroke();
     ctx.restore();
@@ -141,10 +162,7 @@ async function loadData(activityType="All") {
     const response = await fetch("data/athletes.json");
     const data = await response.json();
     athletesData = data.athletes;
-    monthNames = data.month_names.map(m => m.replace(/\s*\d{4}/, '').substring(0,3)); // abbreviated months
-
-    // Only last 2 months
-    monthNames = monthNames.slice(-2);
+    monthNames = data.month_names.map(m => m.slice(0,3)); // abbreviated
 
     const monthSelector = document.getElementById("dailyMonthSelector");
     monthSelector.innerHTML = "";
@@ -193,13 +211,20 @@ function renderDashboard(activityType="All") {
     Object.entries(athletesData).forEach(([alias, athlete]) => {
         if (activityType !== "All" && athlete.activity_types && !athlete.activity_types.includes(activityType)) return;
 
-        // Convert distances to miles
-        const monthlyDistanceMi = athlete.monthly_distances.slice(-2).map(d => +(d*0.621371).toFixed(2));
-        const monthlyTime = athlete.monthly_time.slice(-2);
-        const dailyDistanceMi = (athlete.daily_distance_km && athlete.daily_distance_km.length>0) ? athlete.daily_distance_km.slice(-2).map(dArr => dArr.map(d => +(d*0.621371).toFixed(2))) : [[]];
+        const monthlyDistanceKm = athlete.monthly_distances;
+        const monthlyDistanceMi = monthlyDistanceKm.map(d => +(d*0.621371).toFixed(2));
+        const monthlyTime = athlete.monthly_time;
+
+        // Only last 2 months
+        const lastTwoMonths = monthNames.slice(-2);
+        const lastTwoDistanceMi = monthlyDistanceMi.slice(-2);
+        const lastTwoTime = monthlyTime.slice(-2);
+
         const EXTRA_GOAL = 480;
-        const extraMonths = monthNames;
-        const extraTime = monthlyTime;
+        const extraTime = monthlyTime.slice(-2);
+
+        const dailyDistanceKm = (athlete.daily_distance_km && athlete.daily_distance_km[monthIndex]) ? athlete.daily_distance_km[monthIndex] : [];
+        const dailyDistanceMi = dailyDistanceKm.map(d => +(d*0.621371).toFixed(2));
 
         const card = document.createElement("div");
         card.className = "card";
@@ -240,11 +265,11 @@ function renderDashboard(activityType="All") {
         // === Daily Chart ===
         CHARTS[`dailyChart-${alias}`] = new Chart(document.getElementById(`dailyChart-${alias}`), {
             type: "bar",
-            data:{ labels: dailyDistanceMi[monthIndex] ? dailyDistanceMi[monthIndex].map((_,i)=>i+1) : [], datasets:[{ data: dailyDistanceMi[monthIndex] || [], backgroundColor:"rgba(75,192,192,0.8)", minBarLength:2, barThickness:15 }] },
+            data:{ labels: dailyDistanceMi.map((_,i)=>i+1), datasets:[{ data: dailyDistanceMi, backgroundColor:"rgba(75,192,192,0.8)", minBarLength:2, barThickness:15 }] },
             options:{ 
                 responsive:true,
                 maintainAspectRatio:true,
-                layout:{ padding: CHART_PADDING },
+                layout: { padding: CHART_PADDING },
                 plugins:{ legend:{ display:false } },
                 scales:{
                     x:{ ticks:{ autoSkip:false, maxRotation:0, minRotation:0, font:{ size: FONT_SIZE } } },
@@ -256,30 +281,29 @@ function renderDashboard(activityType="All") {
         // === Monthly Distance Chart ===
         CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`), {
             type:"bar",
-            data:{ labels: monthNames, datasets:[{ data: monthlyDistanceMi, backgroundColor:"rgba(75,192,192,0.6)", barThickness:15 }] },
+            data:{ labels: lastTwoMonths, datasets:[{ data: lastTwoDistanceMi, backgroundColor:"rgba(75,192,192,0.6)", barThickness:15 }] },
             options:{ responsive:true, maintainAspectRatio:false, layout:{ padding: CHART_PADDING }, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE } } }, x:{ ticks:{ font:{ size: FONT_SIZE } } } } }
         });
 
         // === Monthly Time Chart ===
         CHARTS[`monthTimeChart-${alias}`] = new Chart(document.getElementById(`monthTimeChart-${alias}`), {
             type:"bar",
-            data:{ labels: monthNames, datasets:[{ data: monthlyTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:15 }] },
+            data:{ labels: lastTwoMonths, datasets:[{ data: lastTwoTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:15 }] },
             options:{ responsive:true, maintainAspectRatio:false, layout:{ padding: CHART_PADDING }, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE } } }, x:{ ticks:{ font:{ size: FONT_SIZE } } } } }
         });
 
         // === Extra Goal Chart ===
         CHARTS[`extraChart-${alias}`] = new Chart(document.getElementById(`extraChart-${alias}`), {
             type:"bar",
-            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:15 }] },
+            data:{ labels: lastTwoMonths, datasets:[{ data: extraTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:15 }] },
             options:{ 
-                responsive:true, 
-                maintainAspectRatio:false, 
+                responsive:true,
+                maintainAspectRatio:false,
                 layout:{ padding: CHART_PADDING },
-                plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"blue", lineWidth:2 } }, 
-                scales:{ y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE }, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+50 }, x:{ ticks:{ font:{ size: FONT_SIZE } } } } } 
+                plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"blue" } },
+                scales:{ y:{ beginAtZero:true, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+20, ticks:{ font:{ size: FONT_SIZE } } }, x:{ ticks:{ font:{ size: FONT_SIZE } } } } 
             }
         });
-
     });
 }
 
