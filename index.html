@@ -179,8 +179,8 @@ function updateDailyChart(alias, monthIndex){
         delete CHARTS[chartId];
     }
 
-    const maxIndex = dailyDistanceMi.indexOf(Math.max(...dailyDistanceMi));
-    const barColors = dailyDistanceMi.map((_,i)=> i===maxIndex ? "rgba(0,255,0,0.8)" : "rgba(75,192,192,0.8)");
+    // Uniform bar color
+    const barColors = dailyDistanceMi.map(()=> "rgba(75,192,192,0.8)");
 
     CHARTS[chartId] = new Chart(document.getElementById(chartId), {
         type: "bar",
@@ -193,7 +193,17 @@ function updateDailyChart(alias, monthIndex){
             maintainAspectRatio:true,
             plugins:{ legend:{ display:false } },
             scales:{
-                x:{ ticks:{ autoSkip:false, maxRotation:0, minRotation:0, font:{ size: FONT_SIZE } } },
+                x:{
+                    ticks:{
+                        autoSkip:false,
+                        maxRotation:0,
+                        minRotation:0,
+                        font:{ size: FONT_SIZE },
+                        callback: function(value, index){
+                            return (index % 2 === 0) ? this.getLabelForValue(value) : '';
+                        }
+                    }
+                },
                 y:{ beginAtZero:true, ticks:{ font:{ size: FONT_SIZE } } }
             }
         }
