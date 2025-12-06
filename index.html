@@ -58,9 +58,6 @@ select {
 
 /* === Daily chart on top === */
 .daily-chart-wrapper {
-    width: 100%;        
-    max-width: 600px;  
-    height: 220px;      
     margin: 0 auto 20px auto;
 }
 .daily-chart-wrapper canvas {
@@ -79,7 +76,6 @@ select {
 .bottom-charts .chart-tile {
     flex: 1;
     min-width: 150px; 
-    height: 180px;    
 }
 
 /* Chart title styling */
@@ -119,12 +115,14 @@ let monthNames;
 const CHARTS = {}; // chart references
 
 // === Adjustable constants ===
-const FONT_SIZE = 8;       // Axis font
-const TITLE_SIZE = 12;     // Chart title font
-const DAILY_HEIGHT = 220;  // Daily chart height
-const BOTTOM_HEIGHT = 180; // Bottom chart height
-const BAR_THICKNESS = 15;  // Bar thickness
-const EXTRA_GOAL = 480;    // Extra Phys goal line
+const FONT_SIZE = 8;         // axis labels
+const TITLE_SIZE = 10;       // chart titles
+const DAILY_HEIGHT = 160;    // daily chart height
+const DAILY_WIDTH = 500;     // daily chart width
+const BOTTOM_HEIGHT = 15#60;   // bottom charts height
+const BOTTOM_WIDTH = 150;    // bottom chart width (for fixed size, optional)
+const BAR_THICKNESS = 12;    // bar width
+const EXTRA_GOAL = 480;      // extra goal line
 
 Chart.register({
   id: "goalLine",
@@ -230,21 +228,21 @@ function renderDashboard(activityType="All") {
                 </select>
             </div>
 
-            <div class="daily-chart-wrapper chart-tile" style="height:${DAILY_HEIGHT}px;">
+            <div class="daily-chart-wrapper chart-tile" style="height:${DAILY_HEIGHT}px; max-width:${DAILY_WIDTH}px;">
                 <h3 style="font-size:${TITLE_SIZE}px;">Daily Distance - ${monthNames[monthIndex]}</h3>
                 <canvas id="dailyChart-${alias}"></canvas>
             </div>
 
             <div class="bottom-charts">
-                <div class="chart-tile" style="height:${BOTTOM_HEIGHT}px;">
+                <div class="chart-tile" style="height:${BOTTOM_HEIGHT}px; max-width:${BOTTOM_WIDTH}px;">
                     <h3 style="font-size:${TITLE_SIZE}px;">Extra Phys Goal</h3>
                     <canvas id="extraChart-${alias}"></canvas>
                 </div>
-                <div class="chart-tile" style="height:${BOTTOM_HEIGHT}px;">
+                <div class="chart-tile" style="height:${BOTTOM_HEIGHT}px; max-width:${BOTTOM_WIDTH}px;">
                     <h3 style="font-size:${TITLE_SIZE}px;">Monthly Distance</h3>
                     <canvas id="monthChart-${alias}"></canvas>
                 </div>
-                <div class="chart-tile" style="height:${BOTTOM_HEIGHT}px;">
+                <div class="chart-tile" style="height:${BOTTOM_HEIGHT}px; max-width:${BOTTOM_WIDTH}px;">
                     <h3 style="font-size:${TITLE_SIZE}px;">Monthly Time</h3>
                     <canvas id="monthTimeChart-${alias}"></canvas>
                 </div>
