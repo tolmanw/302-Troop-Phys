@@ -267,19 +267,19 @@ function renderDashboard(activityType="All") {
         // monthly charts
         CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`), {
             type: "bar",
-            data: { labels: monthNames, datasets: [{ data: monthlyDistanceMi, backgroundColor:"rgba(75,192,192,0.6)" }] },
+            data: { labels: monthNames, datasets: [{ data: monthlyDistanceMi, backgroundColor:"rgba(75,192,192,0.6)",barThickness:15 }] },
             options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true }, x:{ ticks:{ font:{ size:10 } } } } }
         });
 
         CHARTS[`monthTimeChart-${alias}`] = new Chart(document.getElementById(`monthTimeChart-${alias}`), {
             type: "bar",
-            data: { labels: monthNames, datasets:[{ data: monthlyTime, backgroundColor:"rgba(255,159,64,0.6)" }] },
+            data: { labels: monthNames, datasets:[{ data: monthlyTime, backgroundColor:"rgba(255,159,64,0.6)",barThickness:15 }] },
             options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true }, x:{ ticks:{ font:{ size:10 } } } } }
         });
 
         CHARTS[`extraChart-${alias}`] = new Chart(document.getElementById(`extraChart-${alias}`), {
             type:"bar",
-            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:5 }] },
+            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor:"rgba(255,159,64,0.6)", barThickness:15 }] },
             options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1.2, plugins:{ legend:{ display:false }, goalLine:{ lineAt:EXTRA_GOAL, color:"blue" } }, scales:{ y:{ beginAtZero:true, suggestedMax: Math.max(...extraTime, EXTRA_GOAL)+60 }, x:{ ticks:{ font:{ size:10 } } } } }
         });
 
