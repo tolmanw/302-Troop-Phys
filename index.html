@@ -14,7 +14,7 @@
     --card-width: 350px;        /* Card width */
     --card-gap: 20px;           /* Gap between cards */
     --font-size: 8px;           /* Axis font size */
-    --title-size: 8px;         /* Chart title font size */
+    --title-size: 8px;          /* Chart title font size */
 }
 
 body {
@@ -154,7 +154,12 @@ async function loadData(activityType="All") {
     const response = await fetch("data/athletes.json");
     const data = await response.json();
     athletesData = data.athletes;
-    monthNames = data.month_names.map(m => m.replace(/\s*\d{4}/, ''));
+
+    // Abbreviate month names to 3 letters
+    monthNames = data.month_names.map(m => {
+        const date = new Date(m + ' 1'); // e.g., "October 2025"
+        return date.toLocaleString('en-US', { month: 'short' }); // "Oct", "Nov", ...
+    });
 
     const monthSelector = document.getElementById("dailyMonthSelector");
     monthSelector.innerHTML = "";
