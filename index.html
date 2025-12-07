@@ -109,13 +109,13 @@ select {
 /* --- Mobile-Friendly Overrides --- */
 @media (max-width: 600px) {
     :root {
-        --daily-width: 90%;       
+        --daily-width: 91%;       
         --daily-height: 140px;
         --bottom-width: 20%;
         --bottom-height: 90px;
         --card-width: 95%;
         --card-gap: 12px;
-        --chart-padding: 12px;
+        --chart-padding: 11px;
         --font-size: 6px;
         --title-size: 6px;
     }
@@ -130,15 +130,29 @@ select {
         padding: 4px 8px;
     }
 
+    .card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;  /* centers everything in the card */
+    }
+
+    .daily-chart-wrapper {
+        margin-left: auto;
+        margin-right: auto;   /* centers top daily chart */
+    }
+
     .bottom-charts {
         flex-direction: row;
-        justify-content: space-between;
-        flex-wrap: nowrap;  /* prevent wrapping to new line */
+        justify-content: center; /* center the row */
+        flex-wrap: nowrap;       /* prevent wrapping */
+        gap: 5px;                /* space between charts */
+        width: 100%;             /* ensure charts fit inside card */
     }
 
     .bottom-charts .chart-tile {
-        flex: 1 1 30%;     /* each chart takes ~30% of container */
-        margin-bottom: 0;  /* no extra bottom margin */
+        flex: 1 1 30%;           /* each chart takes ~30% */
+        margin-bottom: 0;
+        max-width: 30%;          /* prevent growing too large */
     }
 }
 
