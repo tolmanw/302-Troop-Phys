@@ -23,6 +23,11 @@ body {
     color: #e6edf3;
     font-family: Arial, sans-serif;
     padding: 20px;
+    font-size: 14px; /* Page font size */
+}
+
+label {
+    font-size: 14px;
 }
 
 select {
@@ -32,6 +37,7 @@ select {
     border-radius: 6px;
     border: 1px solid #30363d;
     margin-bottom: 10px;
+    font-size: 14px; /* Select font size */
 }
 
 .card {
@@ -99,6 +105,36 @@ select {
     color: #c9d1d9;
     text-align: center;
 }
+
+/* --- Mobile-Friendly Overrides --- */
+@media (max-width: 600px) {
+    :root {
+        --daily-width: 260px;
+        --daily-height: 140px;
+        --bottom-width: 90px;
+        --bottom-height: 90px;
+        --card-width: 95%;
+        --card-gap: 8px;
+        --chart-padding: 6px;
+        --font-size: 6px;
+        --title-size: 6px;
+    }
+
+    body {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    select {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    .bottom-charts {
+        flex-direction: column;
+        align-items: center;
+    }
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -107,8 +143,8 @@ select {
 
 <h1 style="font-size: 25px;">Troop Phys Dashboard</h1>
 
-<label style="font-size: 12px;">Select Month for Daily Charts:</label>
-<select id="dailyMonthSelector" style="font-size: 10px; padding: 4px 8px;"></select>
+<label style="font-size: 14px;">Select Month for Daily Charts:</label>
+<select id="dailyMonthSelector" style="font-size: 12px; padding: 4px 8px;"></select>
 
 <div id="container"></div>
 
@@ -120,7 +156,7 @@ const FONT_SIZE = parseInt(getComputedStyle(document.documentElement).getPropert
 const TITLE_SIZE = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'));
 const BAR_THICKNESS = 8; // Global bar thickness
 
-async function loadData(activityType="All") {
+async function loadData() {
     const response = await fetch("data/athletes.json");
     const data = await response.json();
     athletesData = data.athletes;
@@ -185,7 +221,7 @@ function updateDailyChart(alias, monthIndex){
         `Daily Distance - ${monthNames[monthIndex]}`;
 }
 
-function renderDashboard(activityType="All"){
+function renderDashboard(){
     const container = document.getElementById("container");
     container.innerHTML = "";
 
@@ -193,7 +229,6 @@ function renderDashboard(activityType="All"){
     const prevMonthIndex = monthIndex - 1 >= 0 ? monthIndex - 1 : 0;
 
     Object.entries(athletesData).forEach(([alias, athlete])=>{
-
         const monthlyDistanceMi = athlete.monthly_distances.map(d=> +(d*0.621371).toFixed(2));
         const monthlyTime = athlete.monthly_time || [0,0];
 
@@ -237,7 +272,6 @@ function renderDashboard(activityType="All"){
         destroyChartIfExists(`extraChart-${alias}`);
         destroyChartIfExists(`dailyChart-${alias}`);
 
-        // Monthly distance chart
         CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`), {
             type:"bar",
             data:{ labels: extraMonths, datasets:[{ data: [monthlyDistanceMi[prevMonthIndex], monthlyDistanceMi[monthIndex]], backgroundColor:"rgba(75,192,192,0.6)", barThickness: BAR_THICKNESS }] },
@@ -253,7 +287,6 @@ function renderDashboard(activityType="All"){
             }
         });
 
-        // Monthly time chart
         CHARTS[`monthTimeChart-${alias}`] = new Chart(document.getElementById(`monthTimeChart-${alias}`), {
             type:"bar",
             data:{ labels: extraMonths, datasets:[{ data: [monthlyTime[prevMonthIndex] || 0, monthlyTime[monthIndex] || 0], backgroundColor:"rgba(255,159,64,0.6)", barThickness: BAR_THICKNESS }] },
@@ -308,6 +341,7 @@ function renderDashboard(activityType="All"){
     });
 }
 
+// Event listener
 document.getElementById("dailyMonthSelector").addEventListener("change", ()=>{
     const monthIndex = parseInt(document.getElementById("dailyMonthSelector").value);
     Object.keys(athletesData).forEach(alias=>{
@@ -315,6 +349,7 @@ document.getElementById("dailyMonthSelector").addEventListener("change", ()=>{
     });
 });
 
+// Load data
 loadData();
 </script>
 </body>
