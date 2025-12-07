@@ -107,7 +107,7 @@ select {
     text-align: center;
 }
 
-/* --- Mobile-Friendly Overrides --- */
+/* --- Mobile Overrides --- */
 @media (max-width: 600px) {
     :root {
         --daily-width: 92%;       
@@ -119,7 +119,7 @@ select {
         --chart-padding: 10px;
         --font-size: 6px;
         --title-size: 6px;
-        --bar-thickness: 4; /* thinner bars for mobile */
+        --bar-thickness: 4;
     }
 
     body {
@@ -139,14 +139,14 @@ select {
 
     .daily-chart-wrapper {
         margin-left: auto;
-        margin-right: auto;   /* center the daily chart */
+        margin-right: auto;
     }
 
     .bottom-charts {
         flex-direction: row;
-        justify-content: space-between;  /* spread charts evenly */
+        justify-content: space-between;
         flex-wrap: nowrap;
-        gap: 10px;  /* spacing matches chart borders */
+        gap: 10px;
         width: 100%;
     }
 
@@ -296,7 +296,6 @@ function renderDashboard(){
         destroyChartIfExists(`extraChart-${alias}`);
         destroyChartIfExists(`dailyChart-${alias}`);
 
-        // Bottom charts
         const barThickness = getBarThickness();
 
         CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`), {
@@ -368,7 +367,6 @@ function renderDashboard(){
     });
 }
 
-// Event listener
 document.getElementById("dailyMonthSelector").addEventListener("change", ()=>{
     const monthIndex = parseInt(document.getElementById("dailyMonthSelector").value);
     Object.keys(athletesData).forEach(alias=>{
@@ -376,7 +374,6 @@ document.getElementById("dailyMonthSelector").addEventListener("change", ()=>{
     });
 });
 
-// Load data
 loadData();
 </script>
 </body>
