@@ -27,6 +27,10 @@ body {
     font-size: 14px;
 }
 
+label {
+    font-size: 14px;
+}
+
 select {
     background: #21262d;
     color: white;
@@ -34,6 +38,7 @@ select {
     border-radius: 6px;
     border: 1px solid #30363d;
     margin-bottom: 10px;
+    font-size: 14px;
 }
 
 .card {
@@ -52,11 +57,14 @@ select {
     gap: 10px;
     margin-bottom: 10px;
 }
-
 .athlete img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+}
+.athlete h2 {
+    font-size: 1em;
+    margin: 0;
 }
 
 .chart-tile {
@@ -73,37 +81,80 @@ select {
     height: var(--daily-height);
     margin: 0 auto var(--card-gap) auto;
 }
+.daily-chart-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
 
 .bottom-charts {
     display: flex;
     justify-content: space-between;
     gap: 5px;
 }
-
 .bottom-charts .chart-tile {
     width: var(--bottom-width);
     height: var(--bottom-height);
+}
+.bottom-charts .chart-tile canvas {
+    flex: 1;
+    width: 100% !important;
 }
 
 .chart-tile h3 {
     margin: 0 0 3px 0;
     font-size: var(--title-size);
+    color: #c9d1d9;
     text-align: center;
 }
 
-/* ---- PLACEHOLDER ---- */
-.placeholder {
-    opacity: 0.45;
-    pointer-events: none;
-}
+/* --- Mobile Overrides --- */
+@media (max-width: 600px) {
+    :root {
+        --daily-width: 92%;       
+        --daily-height: 140px;
+        --bottom-width: 30%;
+        --bottom-height: 90px;
+        --card-width: 95%;
+        --card-gap: 12px;
+        --chart-padding: 10px;
+        --font-size: 6px;
+        --title-size: 6px;
+        --bar-thickness: 4;
+    }
 
-.placeholder .chart-tile {
-    background: #1f242c;
-    border-style: dashed;
-}
+    body {
+        padding: 10px;
+        font-size: 12px;
+    }
 
-.placeholder h3 {
-    color: #8b949e;
+    select {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    .card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .daily-chart-wrapper {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .bottom-charts {
+        flex-direction: row;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .bottom-charts .chart-tile {
+        flex: 1 1 30%;
+        max-width: 30%;
+        margin-bottom: 0;
+    }
 }
 </style>
 
@@ -111,10 +162,10 @@ select {
 </head>
 <body>
 
-<h1>Troop Dashboard</h1>
+<h1 style="font-size: 25px;">Troop Dashboard</h1>
 
-<label>Daily Distance Month:</label>
-<select id="dailyMonthSelector"></select>
+<label style="font-size: 14px;">Daily Distance Month:</label>
+<select id="dailyMonthSelector" style="font-size: 12px; padding: 4px 8px;"></select>
 
 <div id="container"></div>
 
@@ -124,88 +175,74 @@ let monthNames;
 const CHARTS = {};
 
 function getBarThickness() {
-    return window.innerWidth <= 600 ? 4 : 8;
+    return window.innerWidth <= 600
+        ? parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bar-thickness'))
+        : 8;
 }
 
 async function loadData() {
-    const res = await fetch("data/athletes.json");
-    const data = await res.json();
-
+    const response = await fetch("data/athletes.json");
+    const data = await response.json();
     athletesData = data.athletes;
     monthNames = data.month_names.map(m => m.substr(0,3));
 
-    const sel = document.getElementById("dailyMonthSelector");
-    sel.innerHTML = "";
+    const monthSelector = document.getElementById("dailyMonthSelector");
+    monthSelector.innerHTML = "";
     monthNames.forEach((m,i)=>{
         const opt = document.createElement("option");
         opt.value = i;
         opt.textContent = m;
-        sel.appendChild(opt);
+        monthSelector.appendChild(opt);
     });
-    sel.selectedIndex = monthNames.length - 1;
+    monthSelector.selectedIndex = monthNames.length - 1;
 
     renderDashboard();
 }
 
 function destroyChartIfExists(id){
     if (CHARTS[id]) {
-        CHARTS[id].destroy();
+        try { CHARTS[id].destroy(); } catch(e){}
         delete CHARTS[id];
     }
 }
 
 function updateDailyChart(alias, monthIndex){
     const athlete = athletesData[alias];
-    const miles = athlete.daily_distance_km[monthIndex].map(d => +(d*0.621371).toFixed(2));
-    const id = `dailyChart-${alias}`;
+    const dailyDistanceMi = athlete.daily_distance_km[monthIndex].map(d => +(d*0.621371).toFixed(2));
+    const chartId = `dailyChart-${alias}`;
+    destroyChartIfExists(chartId);
 
-    destroyChartIfExists(id);
+    const barColors = dailyDistanceMi.map(()=> "rgba(75,192,192,0.8)");
 
-    CHARTS[id] = new Chart(document.getElementById(id), {
-        type:"bar",
+    CHARTS[chartId] = new Chart(document.getElementById(chartId), {
+        type: "bar",
         data:{
-            labels: miles.map((_,i)=>i+1),
-            datasets:[{
-                data: miles,
-                backgroundColor:"rgba(75,192,192,0.8)",
-                barThickness: getBarThickness()
-            }]
+            labels: dailyDistanceMi.map((_,i)=>i+1),
+            datasets:[{ data: dailyDistanceMi, backgroundColor: barColors, minBarLength:2, barThickness: getBarThickness() }]
         },
         options:{
             responsive:true,
-            plugins:{ legend:{ display:false }},
+            maintainAspectRatio:true,
+            plugins:{ legend:{ display:false } },
             scales:{
-                y:{ beginAtZero:true }
+                x:{
+                    ticks:{
+                        autoSkip:false,
+                        maxRotation:0,
+                        minRotation:0,
+                        font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) },
+                        callback: function(value, index){
+                            return (index % 2 === 0) ? this.getLabelForValue(value) : '';
+                        }
+                    }
+                },
+                y:{ beginAtZero:true, ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } }
             }
         }
     });
-}
 
-function renderPlaceholderCard() {
-    const container = document.getElementById("container");
-
-    const card = document.createElement("div");
-    card.className = "card placeholder";
-
-    card.innerHTML = `
-        <div class="athlete">
-            <img src="https://via.placeholder.com/40?text=+" />
-            <h2>Coming Soon</h2>
-        </div>
-
-        <div class="daily-chart-wrapper chart-tile">
-            <h3>Daily Distance</h3>
-            <canvas></canvas>
-        </div>
-
-        <div class="bottom-charts">
-            <div class="chart-tile"><h3>Extra Phys Goal</h3><canvas></canvas></div>
-            <div class="chart-tile"><h3>Monthly Distance</h3><canvas></canvas></div>
-            <div class="chart-tile"><h3>Monthly Time</h3><canvas></canvas></div>
-        </div>
-    `;
-
-    container.appendChild(card);
+    document.querySelector(`#dailyChart-${alias}`).parentElement.querySelector("h3").textContent =
+        `Daily Distance - ${monthNames[monthIndex]}`;
 }
 
 function renderDashboard(){
@@ -213,39 +250,129 @@ function renderDashboard(){
     container.innerHTML = "";
 
     const monthIndex = parseInt(document.getElementById("dailyMonthSelector").value);
+    const prevMonthIndex = monthIndex - 1 >= 0 ? monthIndex - 1 : 0;
 
     Object.entries(athletesData).forEach(([alias, athlete])=>{
+        const monthlyDistanceMi = athlete.monthly_distances.map(d=> +(d*0.621371).toFixed(2));
+        const monthlyTime = athlete.monthly_time || [0,0];
+
+        const EXTRA_GOAL = 480; // 8 hours
+        const extraMonths = [monthNames[prevMonthIndex], monthNames[monthIndex]];
+        const extraTime = [monthlyTime[prevMonthIndex] || 0, monthlyTime[monthIndex] || 0];
+
         const card = document.createElement("div");
         card.className = "card";
 
         card.innerHTML = `
             <div class="athlete">
                 <img src="${athlete.profile}">
-                <h2>${athlete.display_name}</h2>
+                <div><h2>${athlete.display_name}</h2></div>
             </div>
 
             <div class="daily-chart-wrapper chart-tile">
-                <h3>Daily Distance - ${monthNames[monthIndex]}</h3>
+                <h3 style="font-size:${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'))}px;">Daily Distance - ${monthNames[monthIndex]}</h3>
                 <canvas id="dailyChart-${alias}"></canvas>
             </div>
 
             <div class="bottom-charts">
-                <div class="chart-tile"><h3>Extra Phys Goal</h3><canvas></canvas></div>
-                <div class="chart-tile"><h3>Monthly Distance</h3><canvas></canvas></div>
-                <div class="chart-tile"><h3>Monthly Time</h3><canvas></canvas></div>
+                <div class="chart-tile">
+                    <h3 style="font-size:${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'))}px;">Extra Phys Goal</h3>
+                    <canvas id="extraChart-${alias}"></canvas>
+                </div>
+                <div class="chart-tile">
+                    <h3 style="font-size:${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'))}px;">Monthly Distance</h3>
+                    <canvas id="monthChart-${alias}"></canvas>
+                </div>
+                <div class="chart-tile">
+                    <h3 style="font-size:${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'))}px;">Monthly Time</h3>
+                    <canvas id="monthTimeChart-${alias}"></canvas>
+                </div>
             </div>
         `;
-
         container.appendChild(card);
+
+        destroyChartIfExists(`monthChart-${alias}`);
+        destroyChartIfExists(`monthTimeChart-${alias}`);
+        destroyChartIfExists(`extraChart-${alias}`);
+        destroyChartIfExists(`dailyChart-${alias}`);
+
+        const barThickness = getBarThickness();
+
+        CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`), {
+            type:"bar",
+            data:{ labels: extraMonths, datasets:[{ data: [monthlyDistanceMi[prevMonthIndex], monthlyDistanceMi[monthIndex]], backgroundColor:"rgba(42,102,186,0.6)", barThickness }] },
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                layout:{ padding:{ bottom:8 } },
+                plugins:{ legend:{ display:false } },
+                scales:{
+                    y:{ beginAtZero:true, ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } },
+                    x:{ ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } }
+                }
+            }
+        });
+
+        CHARTS[`monthTimeChart-${alias}`] = new Chart(document.getElementById(`monthTimeChart-${alias}`), {
+            type:"bar",
+            data:{ labels: extraMonths, datasets:[{ data: [monthlyTime[prevMonthIndex] || 0, monthlyTime[monthIndex] || 0], backgroundColor:"rgba(45,173,131,0.6)", barThickness }] },
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                layout:{ padding:{ bottom:8 } },
+                plugins:{ legend:{ display:false } },
+                scales:{
+                    y:{ beginAtZero:true, ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } },
+                    x:{ ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } }
+                }
+            }
+        });
+
+        const goalLinePlugin = {
+            id: 'goalLine',
+            afterDatasetsDraw(chart) {
+                const { ctx, chartArea:{left,right,top,bottom}, scales:{y} } = chart;
+                const yPos = y.getPixelForValue(EXTRA_GOAL);
+                if (yPos >= top && yPos <= bottom) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash([5,5]);
+                    ctx.moveTo(left, yPos);
+                    ctx.lineTo(right, yPos);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = 'rgba(176,196,222,0.6)';
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        };
+
+        CHARTS[`extraChart-${alias}`] = new Chart(document.getElementById(`extraChart-${alias}`), {
+            type:"bar",
+            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor:"rgba(176,196,222,0.6)", barThickness }] },
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                layout:{ padding:{ bottom:8 } },
+                plugins:{ legend:{ display:false } },
+                scales:{
+                    y:{ beginAtZero:true, max: Math.max(...extraTime, EXTRA_GOAL)+220, ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } },
+                    x:{ ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } }
+                }
+            },
+            plugins:[goalLinePlugin]
+        });
+
         updateDailyChart(alias, monthIndex);
     });
-
-    /* DESIGN-ONLY PLACEHOLDER */
-    renderPlaceholderCard();
 }
 
-document.getElementById("dailyMonthSelector")
-    .addEventListener("change", renderDashboard);
+document.getElementById("dailyMonthSelector").addEventListener("change", ()=>{
+    const monthIndex = parseInt(document.getElementById("dailyMonthSelector").value);
+    Object.keys(athletesData).forEach(alias=>{
+        updateDailyChart(alias, monthIndex);
+    });
+});
 
 loadData();
 </script>
