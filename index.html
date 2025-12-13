@@ -27,10 +27,6 @@ body {
     font-size: 14px;
 }
 
-label {
-    font-size: 14px;
-}
-
 select {
     background: #21262d;
     color: white;
@@ -38,7 +34,6 @@ select {
     border-radius: 6px;
     border: 1px solid #30363d;
     margin-bottom: 10px;
-    font-size: 14px;
 }
 
 .card {
@@ -64,11 +59,6 @@ select {
     border-radius: 50%;
 }
 
-.athlete h2 {
-    font-size: 1em;
-    margin: 0;
-}
-
 .chart-tile {
     background: #2a2e36;
     border: 1px solid #555;
@@ -84,11 +74,6 @@ select {
     margin: 0 auto var(--card-gap) auto;
 }
 
-.daily-chart-wrapper canvas {
-    width: 100% !important;
-    height: 100% !important;
-}
-
 .bottom-charts {
     display: flex;
     justify-content: space-between;
@@ -100,19 +85,13 @@ select {
     height: var(--bottom-height);
 }
 
-.bottom-charts .chart-tile canvas {
-    flex: 1;
-    width: 100% !important;
-}
-
 .chart-tile h3 {
     margin: 0 0 3px 0;
     font-size: var(--title-size);
-    color: #c9d1d9;
     text-align: center;
 }
 
-/* ---- Placeholder Styling ---- */
+/* ---- PLACEHOLDER ---- */
 .placeholder {
     opacity: 0.45;
     pointer-events: none;
@@ -126,48 +105,13 @@ select {
 .placeholder h3 {
     color: #8b949e;
 }
-
-/* --- Mobile Overrides --- */
-@media (max-width: 600px) {
-    :root {
-        --daily-width: 92%;
-        --daily-height: 140px;
-        --bottom-width: 30%;
-        --bottom-height: 90px;
-        --card-width: 95%;
-        --card-gap: 12px;
-        --chart-padding: 10px;
-        --font-size: 6px;
-        --title-size: 6px;
-        --bar-thickness: 4;
-    }
-
-    body {
-        padding: 10px;
-        font-size: 12px;
-    }
-
-    select {
-        font-size: 12px;
-        padding: 4px 8px;
-    }
-
-    .card {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .bottom-charts {
-        gap: 10px;
-    }
-}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<h1 style="font-size: 25px;">Troop Dashboard</h1>
+<h1>Troop Dashboard</h1>
 
 <label>Daily Distance Month:</label>
 <select id="dailyMonthSelector"></select>
@@ -184,20 +128,21 @@ function getBarThickness() {
 }
 
 async function loadData() {
-    const response = await fetch("data/athletes.json");
-    const data = await response.json();
+    const res = await fetch("data/athletes.json");
+    const data = await res.json();
+
     athletesData = data.athletes;
     monthNames = data.month_names.map(m => m.substr(0,3));
 
-    const selector = document.getElementById("dailyMonthSelector");
-    selector.innerHTML = "";
+    const sel = document.getElementById("dailyMonthSelector");
+    sel.innerHTML = "";
     monthNames.forEach((m,i)=>{
         const opt = document.createElement("option");
         opt.value = i;
         opt.textContent = m;
-        selector.appendChild(opt);
+        sel.appendChild(opt);
     });
-    selector.selectedIndex = monthNames.length - 1;
+    sel.selectedIndex = monthNames.length - 1;
 
     renderDashboard();
 }
@@ -209,6 +154,33 @@ function destroyChartIfExists(id){
     }
 }
 
+function updateDailyChart(alias, monthIndex){
+    const athlete = athletesData[alias];
+    const miles = athlete.daily_distance_km[monthIndex].map(d => +(d*0.621371).toFixed(2));
+    const id = `dailyChart-${alias}`;
+
+    destroyChartIfExists(id);
+
+    CHARTS[id] = new Chart(document.getElementById(id), {
+        type:"bar",
+        data:{
+            labels: miles.map((_,i)=>i+1),
+            datasets:[{
+                data: miles,
+                backgroundColor:"rgba(75,192,192,0.8)",
+                barThickness: getBarThickness()
+            }]
+        },
+        options:{
+            responsive:true,
+            plugins:{ legend:{ display:false }},
+            scales:{
+                y:{ beginAtZero:true }
+            }
+        }
+    });
+}
+
 function renderPlaceholderCard() {
     const container = document.getElementById("container");
 
@@ -218,7 +190,7 @@ function renderPlaceholderCard() {
     card.innerHTML = `
         <div class="athlete">
             <img src="https://via.placeholder.com/40?text=+" />
-            <div><h2>Coming Soon</h2></div>
+            <h2>Coming Soon</h2>
         </div>
 
         <div class="daily-chart-wrapper chart-tile">
@@ -245,10 +217,11 @@ function renderDashboard(){
     Object.entries(athletesData).forEach(([alias, athlete])=>{
         const card = document.createElement("div");
         card.className = "card";
+
         card.innerHTML = `
             <div class="athlete">
                 <img src="${athlete.profile}">
-                <div><h2>${athlete.display_name}</h2></div>
+                <h2>${athlete.display_name}</h2>
             </div>
 
             <div class="daily-chart-wrapper chart-tile">
@@ -262,10 +235,12 @@ function renderDashboard(){
                 <div class="chart-tile"><h3>Monthly Time</h3><canvas></canvas></div>
             </div>
         `;
+
         container.appendChild(card);
+        updateDailyChart(alias, monthIndex);
     });
 
-    /* 🔹 DESIGN-ONLY PLACEHOLDER */
+    /* DESIGN-ONLY PLACEHOLDER */
     renderPlaceholderCard();
 }
 
