@@ -116,7 +116,7 @@ select {
 /* --- Mobile Overrides --- */
 @media (max-width: 600px) {
     :root {
-        --daily-width: 92%;       
+        --daily-width: 92%;
         --daily-height: 140px;
         --bottom-width: 30%;
         --bottom-height: 90px;
@@ -170,8 +170,8 @@ select {
 
 <h1 style="font-size: 25px;">Troop Dashboard</h1>
 
-<label style="font-size: 14px;">Daily Distance Month:</label>
-<select id="dailyMonthSelector" style="font-size: 12px; padding: 4px 8px;"></select>
+<label>Daily Distance Month:</label>
+<select id="dailyMonthSelector"></select>
 
 <div id="container"></div>
 
@@ -218,31 +218,27 @@ function updateDailyChart(alias, monthIndex){
     const chartId = `dailyChart-${alias}`;
     destroyChartIfExists(chartId);
 
-    const barColors = dailyDistanceMi.map(()=> "rgba(75,192,192,0.8)");
-
     CHARTS[chartId] = new Chart(document.getElementById(chartId), {
         type: "bar",
         data:{
             labels: dailyDistanceMi.map((_,i)=>i+1),
-            datasets:[{ data: dailyDistanceMi, backgroundColor: barColors, minBarLength:2, barThickness: getBarThickness() }]
+            datasets:[{
+                data: dailyDistanceMi,
+                backgroundColor:"rgba(75,192,192,0.8)",
+                minBarLength:2,
+                barThickness:getBarThickness()
+            }]
         },
         options:{
             responsive:true,
             maintainAspectRatio:true,
             plugins:{ legend:{ display:false } },
             scales:{
-                x:{
-                    ticks:{
-                        autoSkip:false,
-                        maxRotation:0,
-                        minRotation:0,
-                        font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) },
-                        callback: function(value, index){
-                            return (index % 2 === 0) ? this.getLabelForValue(value) : '';
-                        }
-                    }
-                },
-                y:{ beginAtZero:true, ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } }
+                x:{ ticks:{ autoSkip:false, maxRotation:0, minRotation:0,
+                    font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) },
+                    callback:(v,i)=> i%2===0 ? v+1 : "" } },
+                y:{ beginAtZero:true,
+                    ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } }
             }
         }
     });
@@ -262,110 +258,60 @@ function renderDashboard(){
         const monthlyDistanceMi = athlete.monthly_distances.map(d=> +(d*0.621371).toFixed(2));
         const monthlyTime = athlete.monthly_time || [0,0];
 
-        const EXTRA_GOAL = 480; // 8 hours
+        const EXTRA_GOAL = 480;
         const extraMonths = [monthNames[prevMonthIndex], monthNames[monthIndex]];
         const extraTime = [monthlyTime[prevMonthIndex] || 0, monthlyTime[monthIndex] || 0];
 
+        const extraBarColors = extraTime.map(v =>
+            v >= EXTRA_GOAL
+                ? "rgba(46,204,113,0.45)"
+                : "rgba(231,76,60,0.45)"
+        );
+
         const card = document.createElement("div");
         card.className = "card";
-
         card.innerHTML = `
             <div class="athlete">
                 <img src="${athlete.profile}">
-                <div><h2>${athlete.display_name}</h2></div>
+                <h2>${athlete.display_name}</h2>
             </div>
 
             <div class="daily-chart-wrapper chart-tile">
-                <h3 style="font-size:${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'))}px;">Daily Distance - ${monthNames[monthIndex]}</h3>
+                <h3>Daily Distance - ${monthNames[monthIndex]}</h3>
                 <canvas id="dailyChart-${alias}"></canvas>
             </div>
 
             <div class="bottom-charts">
-                <div class="chart-tile">
-                    <h3 style="font-size:${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'))}px;">Extra Phys Goal</h3>
-                    <canvas id="extraChart-${alias}"></canvas>
-                </div>
-                <div class="chart-tile">
-                    <h3 style="font-size:${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'))}px;">Monthly Distance</h3>
-                    <canvas id="monthChart-${alias}"></canvas>
-                </div>
-                <div class="chart-tile">
-                    <h3 style="font-size:${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--title-size'))}px;">Monthly Time</h3>
-                    <canvas id="monthTimeChart-${alias}"></canvas>
-                </div>
+                <div class="chart-tile"><h3>Extra Phys Goal</h3><canvas id="extraChart-${alias}"></canvas></div>
+                <div class="chart-tile"><h3>Monthly Distance</h3><canvas id="monthChart-${alias}"></canvas></div>
+                <div class="chart-tile"><h3>Monthly Time</h3><canvas id="monthTimeChart-${alias}"></canvas></div>
             </div>
         `;
         container.appendChild(card);
 
-        destroyChartIfExists(`monthChart-${alias}`);
-        destroyChartIfExists(`monthTimeChart-${alias}`);
-        destroyChartIfExists(`extraChart-${alias}`);
-        destroyChartIfExists(`dailyChart-${alias}`);
-
-        const barThickness = getBarThickness();
-
-        CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`), {
-            type:"bar",
-            data:{ labels: extraMonths, datasets:[{ data: [monthlyDistanceMi[prevMonthIndex], monthlyDistanceMi[monthIndex]], backgroundColor:"rgba(42,102,186,0.6)", barThickness }] },
-            options:{
-                responsive:true,
-                maintainAspectRatio:false,
-                layout:{ padding:{ bottom:8 } },
-                plugins:{ legend:{ display:false } },
-                scales:{
-                    y:{ beginAtZero:true, ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } },
-                    x:{ ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } }
-                }
-            }
-        });
-
-        CHARTS[`monthTimeChart-${alias}`] = new Chart(document.getElementById(`monthTimeChart-${alias}`), {
-            type:"bar",
-            data:{ labels: extraMonths, datasets:[{ data: [monthlyTime[prevMonthIndex] || 0, monthlyTime[monthIndex] || 0], backgroundColor:"rgba(45,173,131,0.6)", barThickness }] },
-            options:{
-                responsive:true,
-                maintainAspectRatio:false,
-                layout:{ padding:{ bottom:8 } },
-                plugins:{ legend:{ display:false } },
-                scales:{
-                    y:{ beginAtZero:true, ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } },
-                    x:{ ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } }
-                }
-            }
-        });
-
         const goalLinePlugin = {
-            id: 'goalLine',
-            afterDatasetsDraw(chart) {
-                const { ctx, chartArea:{left,right,top,bottom}, scales:{y} } = chart;
+            id:'goalLine',
+            afterDatasetsDraw(chart){
+                const {ctx, chartArea:{left,right}, scales:{y}} = chart;
                 const yPos = y.getPixelForValue(EXTRA_GOAL);
-                if (yPos >= top && yPos <= bottom) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.setLineDash([5,5]);
-                    ctx.moveTo(left, yPos);
-                    ctx.lineTo(right, yPos);
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = 'rgba(176,196,222,0.6)';
-                    ctx.stroke();
-                    ctx.restore();
-                }
+                ctx.save();
+                ctx.setLineDash([5,5]);
+                ctx.beginPath();
+                ctx.moveTo(left,yPos);
+                ctx.lineTo(right,yPos);
+                ctx.strokeStyle="rgba(176,196,222,0.6)";
+                ctx.stroke();
+                ctx.restore();
             }
         };
 
-        CHARTS[`extraChart-${alias}`] = new Chart(document.getElementById(`extraChart-${alias}`), {
+        new Chart(document.getElementById(`extraChart-${alias}`),{
             type:"bar",
-            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor:"rgba(176,196,222,0.6)", barThickness }] },
-            options:{
-                responsive:true,
-                maintainAspectRatio:false,
-                layout:{ padding:{ bottom:8 } },
-                plugins:{ legend:{ display:false } },
-                scales:{
-                    y:{ beginAtZero:true, max: Math.max(...extraTime, EXTRA_GOAL)+220, ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } },
-                    x:{ ticks:{ font:{ size: parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size')) } } }
-                }
-            },
+            data:{ labels:extraMonths,
+                datasets:[{ data:extraTime, backgroundColor:extraBarColors, barThickness:getBarThickness() }] },
+            options:{ responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{display:false} },
+                scales:{ y:{ beginAtZero:true, max:Math.max(...extraTime,EXTRA_GOAL)+220 } } },
             plugins:[goalLinePlugin]
         });
 
@@ -374,10 +320,8 @@ function renderDashboard(){
 }
 
 document.getElementById("dailyMonthSelector").addEventListener("change", ()=>{
-    const monthIndex = parseInt(document.getElementById("dailyMonthSelector").value);
-    Object.keys(athletesData).forEach(alias=>{
-        updateDailyChart(alias, monthIndex);
-    });
+    const monthIndex = parseInt(dailyMonthSelector.value);
+    Object.keys(athletesData).forEach(a=>updateDailyChart(a,monthIndex));
 });
 
 loadData();
