@@ -355,7 +355,17 @@ function renderDashboard(){
 
         CHARTS[`extraChart-${alias}`] = new Chart(document.getElementById(`extraChart-${alias}`), {
             type:"bar",
-            data:{ labels: extraMonths, datasets:[{ data: extraTime, backgroundColor:"rgba(176,196,222,0.6)", barThickness }] },
+            data:{
+                labels: extraMonths,
+                datasets:[{
+                    data: extraTime,
+                    backgroundColor: extraTime.map(val => val >= EXTRA_GOAL 
+                        ? 'rgba(0,255,0,0.3)'  // green if at/over goal
+                        : 'rgba(255,0,0,0.3)'  // red if below goal
+                    ),
+                    barThickness: barThickness
+                }]
+            },
             options:{
                 responsive:true,
                 maintainAspectRatio:false,
