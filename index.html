@@ -25,6 +25,7 @@ body {
     font-family: Arial, sans-serif;
     padding: 20px;
     font-size: 14px;
+    position: relative; /* Needed for absolute positioning of the logo */
 }
 
 label {
@@ -71,6 +72,18 @@ select {
 .athlete h2 {
     font-size: 1em;
     margin: 0;
+}
+
+/* Top-right logo */
+#topLogo {
+    width: 60px; /* Medium size */
+    height: 60px;
+    border-radius: 50%;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    object-fit: cover;
+    border: 2px solid #555;
 }
 
 .chart-tile {
@@ -168,7 +181,10 @@ select {
 </head>
 <body>
 
-<h1 style="font-size: 25px;">Troop Dashboard</h1>
+<!-- Top-right circular logo -->
+<img id="topLogo" src="logo.jpeg" alt="Troop Logo">
+
+<h1 style="font-size: 25px; text-align:center;">Troop Dashboard</h1>
 
 <label style="font-size: 14px;">Daily Distance Month:</label>
 <select id="dailyMonthSelector" style="font-size: 12px; padding: 4px 8px;"></select>
@@ -345,7 +361,7 @@ function renderDashboard(){
                     ctx.setLineDash([5,5]);
                     ctx.moveTo(left, yPos);
                     ctx.lineTo(right, yPos);
-                    ctx.lineWidth = 1.5;
+                    ctx.lineWidth = 2;
                     ctx.strokeStyle = 'rgba(176,196,222,0.6)';
                     ctx.stroke();
                     ctx.restore();
