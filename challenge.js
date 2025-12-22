@@ -1,10 +1,5 @@
 let challengeChart = null;
 
-async function loadChallengeData() {
-    const response = await fetch("data/athletes.json");
-    return await response.json();
-}
-
 function getLastMonthWithData(athletesData) {
     const numMonths = Object.values(athletesData)[0].daily_distance_km.length;
     for (let i = numMonths - 1; i >= 0; i--) {
@@ -26,10 +21,18 @@ function destroyChallenge() {
         <canvas id="challenge"></canvas>`;
 }
 
-function renderChallenge(athletesData, monthIdx) {
-    const canvas = document.getElementById("challenge");
-    if (!canvas) return;
+function getRandomColor() {
+    const r = Math.floor(Math.random() * 200 + 30);
+    const g = Math.floor(Math.random() * 200 + 30);
+    const b = Math.floor(Math.random() * 200 + 30);
+    return `rgb(${r},${g},${b})`;
+}
 
+function renderChallenge(athletesData, monthIdx) {
+    const container = document.getElementById("challengeContainer");
+    container.style.display = "block";
+
+    const canvas = document.getElementById("challenge");
     canvas.style.width = "100%";
     canvas.style.height = window.innerWidth <= 600 ? "250px" : "400px";
 
@@ -50,6 +53,8 @@ function renderChallenge(athletesData, monthIdx) {
     });
 
     const labels = datasets[0]?.data.map((_, i) => i + 1) || [];
+    const maxDistance = Math.max(...datasets.flatMap(d => d.data)) || 10;
+
     const ctx = canvas.getContext("2d");
 
     challengeChart = new Chart(ctx, {
@@ -59,11 +64,28 @@ function renderChallenge(athletesData, monthIdx) {
             responsive: true,
             maintainAspectRatio: false,
             animation: false,
-            plugins: { legend: { display: true, position: "bottom" } },
+            plugins: {
+                legend: { display: true, position: "bottom" },
+                title: {
+                    display: true,
+                    text: "Monthly Challenge",
+                    align: "start",
+                    font: { size: window.innerWidth <= 600 ? 14 : 18 },
+                    color: "#e6edf3"
+                }
+            },
             layout: { padding: { left: 10, right: 10, top: 10, bottom: 10 } },
             scales: {
-                x: { title: { display: true, text: "Day of Month" } },
-                y: { title: { display: true, text: "Cumulative Distance (mi)" }, beginAtZero: true }
+                x: {
+                    title: { display: true, text: "Day of Month" },
+                    ticks: { font: { size: window.innerWidth <= 600 ? 10 : 12 } }
+                },
+                y: {
+                    title: { display: true, text: "Cumulative Distance (mi)" },
+                    beginAtZero: true,
+                    suggestedMax: maxDistance + 5,
+                    ticks: { font: { size: window.innerWidth <= 600 ? 10 : 12 } }
+                }
             }
         },
         plugins: [{
@@ -89,13 +111,6 @@ function renderChallenge(athletesData, monthIdx) {
     });
 }
 
-function getRandomColor() {
-    const r = Math.floor(Math.random() * 200 + 30);
-    const g = Math.floor(Math.random() * 200 + 30);
-    const b = Math.floor(Math.random() * 200 + 30);
-    return `rgb(${r},${g},${b})`;
-}
-
 // --- Toggle listener ---
 document.addEventListener("DOMContentLoaded", () => {
     const toggle = document.getElementById("challengeToggle");
@@ -103,4 +118,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const on = e.target.checked;
         const container = document.getElementById("challengeContainer");
         document.getElementById("container").style.display = on ? "none" : "flex";
-        container
+        container.style.display = on ? "block" : "none";
+
+        if (on) {
+            window.DASHBOARD.destroyCharts();
+            const { athletesData } = window.DASHBOARD.getData();
+            const currentMonthIndex = getLastMonthWithData(athletesData);
+            renderChallenge(athletesData, currentMonthIndex);
+        } else {
+            destroyChallenge();
+            window.DASHBOARD.renderDashboard();
+        }
+    });
+});
