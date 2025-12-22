@@ -1,10 +1,12 @@
 let challengeChart = null;
 
+// Load JSON data
 async function loadChallengeData() {
     const response = await fetch("data/athletes.json");
     return await response.json();
 }
 
+// Toggle listener
 document.getElementById("challengeToggle").addEventListener("change", async e => {
     const on = e.target.checked;
     const container = document.getElementById("challengeContainer");
@@ -22,6 +24,7 @@ document.getElementById("challengeToggle").addEventListener("change", async e =>
     }
 });
 
+// Destroy previous chart
 function destroyChallenge() {
     if (challengeChart) {
         challengeChart.destroy();
@@ -35,10 +38,17 @@ function destroyChallenge() {
         </div>`;
 }
 
+// Render cumulative distance chart
 function renderChallenge(athletesData, monthNames, monthIdx) {
     const container = document.getElementById("challengeContainer");
     const wrapper = container.querySelector(".daily-chart-wrapper");
     wrapper.querySelector("h3").textContent = `${monthNames[monthIdx]} Challenge`;
+
+    // Set fixed wrapper height like dashboard
+    const dailyWidth = window.innerWidth <= 600 ? wrapper.clientWidth : 305;
+    const dailyHeight = window.innerWidth <= 600 ? 200 : 170;
+    wrapper.style.width = dailyWidth + "px";
+    wrapper.style.height = dailyHeight + "px";
 
     const athletes = Object.entries(athletesData); // [alias, athlete]
 
@@ -61,7 +71,7 @@ function renderChallenge(athletesData, monthNames, monthIdx) {
 
     const canvas = wrapper.querySelector("#challenge");
     canvas.style.width = "100%";
-    canvas.style.height = getComputedStyle(wrapper).height; // mimic dashboard behavior
+    canvas.style.height = "100%";
 
     challengeChart = new Chart(canvas, {
         type: "line",
@@ -90,7 +100,7 @@ function renderChallenge(athletesData, monthNames, monthIdx) {
                     const img = new Image();
                     img.src = a.profile;
                     img.onload = () => {
-                        const size = window.innerWidth <= 600 ? 16 : 24; // scale for mobile
+                        const size = window.innerWidth <= 600 ? 16 : 24;
                         ctx.drawImage(img, xPos - size/2, yPos - size/2, size, size);
                     };
                 });
