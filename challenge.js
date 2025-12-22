@@ -1,26 +1,15 @@
 let challengeChart = null;
 
-function getLastMonthWithData(athletesData) {
-    const numMonths = Object.values(athletesData)[0].daily_distance_km.length;
-    for (let i = numMonths - 1; i >= 0; i--) {
-        if (Object.values(athletesData).some(a => (a.daily_distance_km[i] || []).some(d => d > 0))) {
-            return i;
-        }
-    }
-    return numMonths - 1;
-}
-
 function destroyChallenge() {
     if (challengeChart) {
         challengeChart.destroy();
         challengeChart = null;
     }
     const container = document.getElementById("challengeContainer");
-    container.innerHTML = `
-        <h2 style="text-align:left; margin-bottom:10px;">Monthly Challenge</h2>
-        <canvas id="challenge"></canvas>`;
+    container.innerHTML = "";
 }
 
+// Random color generator
 function getRandomColor() {
     const r = Math.floor(Math.random() * 200 + 30);
     const g = Math.floor(Math.random() * 200 + 30);
@@ -28,9 +17,22 @@ function getRandomColor() {
     return `rgb(${r},${g},${b})`;
 }
 
+// Render cumulative line chart
 function renderChallenge(athletesData, monthIdx) {
     const container = document.getElementById("challengeContainer");
-    container.style.display = "block";
+    container.innerHTML = `
+        <div class="card" style="
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 20px auto;
+            padding: 15px;
+            background: #1b1f25;
+            border-radius: 12px;
+        ">
+            <h2 style="text-align:left; margin-bottom:10px; font-size:18px;">Monthly Challenge</h2>
+            <canvas id="challenge"></canvas>
+        </div>
+    `;
 
     const canvas = document.getElementById("challenge");
     canvas.style.width = "100%";
@@ -40,7 +42,7 @@ function renderChallenge(athletesData, monthIdx) {
 
     const datasets = athletes.map(([alias, a]) => {
         let cumulative = 0;
-        const data = (a.daily_distance_km[monthIdx] || []).map(d => +(cumulative += d * 0.621371).toFixed(2));
+        const data = (a.daily_distance_km[monthIdx] || []).map(d => +(cumulative += d*0.621371).toFixed(2));
         return {
             label: a.display_name,
             data,
@@ -64,28 +66,12 @@ function renderChallenge(athletesData, monthIdx) {
             responsive: true,
             maintainAspectRatio: false,
             animation: false,
-            plugins: {
-                legend: { display: true, position: "bottom" },
-                title: {
-                    display: true,
-                    text: "Monthly Challenge",
-                    align: "start",
-                    font: { size: window.innerWidth <= 600 ? 14 : 18 },
-                    color: "#e6edf3"
-                }
+            plugins: { 
+                legend: { display: true, position: "bottom" }
             },
-            layout: { padding: { left: 10, right: 10, top: 10, bottom: 10 } },
             scales: {
-                x: {
-                    title: { display: true, text: "Day of Month" },
-                    ticks: { font: { size: window.innerWidth <= 600 ? 10 : 12 } }
-                },
-                y: {
-                    title: { display: true, text: "Cumulative Distance (mi)" },
-                    beginAtZero: true,
-                    suggestedMax: maxDistance + 5,
-                    ticks: { font: { size: window.innerWidth <= 600 ? 10 : 12 } }
-                }
+                x: { title: { display: true, text: "Day of Month" } },
+                y: { title: { display: true, text: "Cumulative Distance (mi)" }, min:0, max: maxDistance + 5 }
             }
         },
         plugins: [{
@@ -103,7 +89,7 @@ function renderChallenge(athletesData, monthIdx) {
                     img.src = a.profile;
                     img.onload = () => {
                         const size = window.innerWidth <= 600 ? 16 : 24;
-                        ctx.drawImage(img, xPos - size / 2, yPos - size / 2, size, size);
+                        ctx.drawImage(img, xPos - size/2, yPos - size/2, size, size);
                     };
                 });
             }
@@ -111,23 +97,5 @@ function renderChallenge(athletesData, monthIdx) {
     });
 }
 
-// --- Toggle listener ---
-document.addEventListener("DOMContentLoaded", () => {
-    const toggle = document.getElementById("challengeToggle");
-    toggle.addEventListener("change", async e => {
-        const on = e.target.checked;
-        const container = document.getElementById("challengeContainer");
-        document.getElementById("container").style.display = on ? "none" : "flex";
-        container.style.display = on ? "block" : "none";
-
-        if (on) {
-            window.DASHBOARD.destroyCharts();
-            const { athletesData } = window.DASHBOARD.getData();
-            const currentMonthIndex = getLastMonthWithData(athletesData);
-            renderChallenge(athletesData, currentMonthIndex);
-        } else {
-            destroyChallenge();
-            window.DASHBOARD.renderDashboard();
-        }
-    });
-});
+// Toggle listener
+document.addEventListener
