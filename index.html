@@ -118,9 +118,9 @@ const CHARTS = {};
 let CURRENT_VIEW = "dashboard";
 
 function getBarThickness(){ return window.innerWidth <= 600 ? parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bar-thickness')) : 8; }
-
 function destroyChartIfExists(id){ if(CHARTS[id]){ try{CHARTS[id].destroy()}catch{} delete CHARTS[id]; } }
 
+// -------------------- Dashboard Code --------------------
 function updateDailyChart(alias, monthIndex){
     const athlete = athletesData[alias];
     const dailyDistanceMi = athlete.daily_distance_km[monthIndex].map(d=>(d*0.621371).toFixed(2));
@@ -159,6 +159,7 @@ function renderDashboard(){
             </div>`;
         container.appendChild(card);
 
+        // Destroy old charts
         destroyChartIfExists(`monthChart-${alias}`);
         destroyChartIfExists(`monthTimeChart-${alias}`);
         destroyChartIfExists(`extraChart-${alias}`);
@@ -166,13 +167,51 @@ function renderDashboard(){
 
         const barThickness = getBarThickness();
 
-        CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`),{type:"bar",data:{labels:extraMonths,datasets:[{data:[monthlyDistanceMi[prevMonthIndex],monthlyDistanceMi[monthIndex]],backgroundColor:"rgba(42,102,186,0.6)",barThickness}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{}}}});
-        CHARTS[`monthTimeChart-${alias}`] = new Chart(document.getElementById(`monthTimeChart-${alias}`),{type:"bar",data:{labels:extraMonths,datasets:[{data:[monthlyTime[prevMonthIndex]||0,monthlyTime[monthIndex]||0],backgroundColor:"rgba(45,173,131,0.6)",barThickness}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{}}}});
+        // Monthly distance chart
+        CHARTS[`monthChart-${alias}`] = new Chart(document.getElementById(`monthChart-${alias}`),{
+            type:"bar",
+            data:{ labels:extraMonths, datasets:[{data:[monthlyDistanceMi[prevMonthIndex],monthlyDistanceMi[monthIndex]],backgroundColor:"rgba(42,102,186,0.6)",barThickness}]},
+            options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}, x:{}}}
+        });
+
+        // Monthly time chart
+        CHARTS[`monthTimeChart-${alias}`] = new Chart(document.getElementById(`monthTimeChart-${alias}`),{
+            type:"bar",
+            data:{ labels:extraMonths, datasets:[{data:[monthlyTime[prevMonthIndex]||0, monthlyTime[monthIndex]||0],backgroundColor:"rgba(45,173,131,0.6)",barThickness}]},
+            options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}, x:{}}}
+        });
+
+        // Extra phys goal
+        const goalLinePlugin = {
+            id:'goalLine',
+            afterDatasetsDraw(chart){
+                const { ctx, chartArea:{left,right,top,bottom}, scales:{y} } = chart;
+                const yPos = y.getPixelForValue(EXTRA_GOAL);
+                if(yPos>=top && yPos<=bottom){
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash([5,5]);
+                    ctx.moveTo(left,yPos);
+                    ctx.lineTo(right,yPos);
+                    ctx.lineWidth=2;
+                    ctx.strokeStyle='rgba(176,196,222,0.6)';
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        };
+
+        CHARTS[`extraChart-${alias}`] = new Chart(document.getElementById(`extraChart-${alias}`),{
+            type:"bar",
+            data:{ labels:extraMonths, datasets:[{data:extraTime, backgroundColor: extraTime.map(v=>v>=EXTRA_GOAL?"rgba(0,255,0,0.3)":"rgba(255,0,0,0.3)"), barThickness}]},
+            options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, suggestedMin:0, max: Math.max(...extraTime, EXTRA_GOAL)+220}, x:{}}}, plugins:[goalLinePlugin]
+        });
 
         updateDailyChart(alias, monthIndex);
     });
 }
 
+// -------------------- Load Data --------------------
 async function loadData(){
     const response = await fetch("data/athletes.json");
     const data = await response.json();
@@ -187,17 +226,21 @@ async function loadData(){
     renderDashboard();
 }
 
-document.getElementById("viewToggle").addEventListener("change",()=>{
-    CURRENT_VIEW = document.getElementById("viewToggle").checked ? "challenge" : "dashboard";
-    document.getElementById("container").style.display = CURRENT_VIEW==="dashboard"?"flex":"none";
-    document.getElementById("challengeContainer").style.display = CURRENT_VIEW==="challenge"?"flex":"none";
-    const monthIndex = parseInt(document.getElementById("dailyMonthSelector").value);
-    CURRENT_VIEW==="dashboard"?renderDashboard():renderChallengeView(athletesData, monthNames, monthIndex, CHARTS);
-});
-
+// -------------------- Event Listeners --------------------
 document.getElementById("dailyMonthSelector").addEventListener("change",()=>{
     const monthIndex = parseInt(document.getElementById("dailyMonthSelector").value);
-    CURRENT_VIEW==="dashboard"?Object.keys(athletesData).forEach(a=>updateDailyChart(a,monthIndex)):renderChallengeView(athletesData,monthNames,monthIndex,CHARTS);
+    CURRENT_VIEW==="dashboard" ? Object.keys(athletesData).forEach(a=>updateDailyChart(a,monthIndex)) : renderChallengeView(athletesData,monthNames,monthIndex,CHARTS);
+});
+
+document.getElementById("viewToggle").addEventListener("change", ()=>{
+    CURRENT_VIEW = document.getElementById("viewToggle").checked ? "challenge" : "dashboard";
+    document.getElementById("container").style.display = CURRENT_VIEW==="dashboard" ? "flex" : "none";
+    document.getElementById("challengeContainer").style.display = CURRENT_VIEW==="challenge" ? "flex" : "none";
+
+    const monthIndex = parseInt(document.getElementById("dailyMonthSelector").value);
+    if(CURRENT_VIEW==="challenge"){
+        renderChallengeView(athletesData, monthNames, monthIndex, CHARTS);
+    }
 });
 
 loadData();
