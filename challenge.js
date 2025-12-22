@@ -1,12 +1,10 @@
 let challengeChart = null;
 
-// Load JSON data
 async function loadChallengeData() {
     const response = await fetch("data/athletes.json");
     return await response.json();
 }
 
-// Find the last month with any non-zero daily distance
 function getLastMonthWithData(athletesData) {
     const numMonths = Object.values(athletesData)[0].daily_distance_km.length;
     for (let i = numMonths - 1; i >= 0; i--) {
@@ -17,28 +15,6 @@ function getLastMonthWithData(athletesData) {
     return numMonths - 1;
 }
 
-// Toggle listener
-document.addEventListener("DOMContentLoaded", () => {
-    const toggle = document.getElementById("challengeToggle");
-    toggle.addEventListener("change", async e => {
-        const on = e.target.checked;
-        const container = document.getElementById("challengeContainer");
-        document.getElementById("container").style.display = on ? "none" : "flex";
-        container.style.display = on ? "block" : "none";
-
-        if (on) {
-            destroyChallenge();
-            const data = await loadChallengeData();
-            const currentMonthIndex = getLastMonthWithData(data.athletes);
-            renderChallenge(data.athletes, currentMonthIndex);
-        } else {
-            destroyChallenge();
-            document.getElementById("container").style.display = "flex";
-        }
-    });
-});
-
-// Destroy previous chart and create canvas
 function destroyChallenge() {
     if (challengeChart) {
         challengeChart.destroy();
@@ -50,7 +26,6 @@ function destroyChallenge() {
         <canvas id="challenge"></canvas>`;
 }
 
-// Render cumulative distance chart
 function renderChallenge(athletesData, monthIdx) {
     const canvas = document.getElementById("challenge");
     if (!canvas) return;
@@ -120,3 +95,12 @@ function getRandomColor() {
     const b = Math.floor(Math.random() * 200 + 30);
     return `rgb(${r},${g},${b})`;
 }
+
+// --- Toggle listener ---
+document.addEventListener("DOMContentLoaded", () => {
+    const toggle = document.getElementById("challengeToggle");
+    toggle.addEventListener("change", async e => {
+        const on = e.target.checked;
+        const container = document.getElementById("challengeContainer");
+        document.getElementById("container").style.display = on ? "none" : "flex";
+        container
